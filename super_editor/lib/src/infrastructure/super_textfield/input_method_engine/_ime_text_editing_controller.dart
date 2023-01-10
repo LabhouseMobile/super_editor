@@ -26,16 +26,18 @@ final _log = imeTextFieldLog;
 /// By default, an [ImeAttributedTextEditingController] is not connected to the platform
 /// IME. To connect to the IME, call `attachToIme`. To detach from the IME, call
 /// `detachFromIme`.
-class ImeAttributedTextEditingController extends AttributedTextEditingController
-    with TextInputClient, DeltaTextInputClient {
+class ImeAttributedTextEditingController extends AttributedTextEditingController with TextInputClient, DeltaTextInputClient {
   ImeAttributedTextEditingController({
     AttributedTextEditingController? controller,
     bool disposeClientController = true,
     void Function(RawFloatingCursorPoint)? onIOSFloatingCursorChange,
+    this.keyboardAppearance = Brightness.light,
+    TextInputConnectionFactory? inputConnectionFactory,
   })  : _realController = controller ?? AttributedTextEditingController(),
         _disposeClientController = disposeClientController,
+        _inputConnectionFactory = inputConnectionFactory,
         _onIOSFloatingCursorChange = onIOSFloatingCursorChange {
-    _realController.addListener(_onTextChange);
+    _realController.addListener(_onInnerControllerChange);
   }
 
   @override
@@ -47,12 +49,20 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     super.dispose();
   }
 
+  /// The appearance of the software keyboard.
+  ///
+  /// Only used for iOS devices.
+  final Brightness keyboardAppearance;
+
   final AttributedTextEditingController _realController;
 
   @Deprecated("this property is exposed temporarily as super_editor evaluates what to do with controllers")
   AttributedTextEditingController get innerController => _realController;
 
   final bool _disposeClientController;
+
+  // Only for testing purposes.
+  final TextInputConnectionFactory? _inputConnectionFactory;
 
   void Function(RawFloatingCursorPoint)? _onIOSFloatingCursorChange;
 
@@ -89,18 +99,17 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
       return;
     }
 
-    _inputConnection = TextInput.attach(
-        this,
-        TextInputConfiguration(
-          autocorrect: autocorrect,
-          enableDeltaModel: true,
-          enableSuggestions: enableSuggestions,
-          inputAction: textInputAction,
-          inputType: textInputType,
-        ));
-    _inputConnection!
-      ..show()
-      ..setEditingState(currentTextEditingValue!);
+    final imeConfig = TextInputConfiguration(
+      autocorrect: autocorrect,
+      enableDeltaModel: true,
+      enableSuggestions: enableSuggestions,
+      inputAction: textInputAction,
+      inputType: textInputType,
+      keyboardAppearance: keyboardAppearance,
+    );
+    _inputConnection = _inputConnectionFactory?.call(this, imeConfig) ?? TextInput.attach(this, imeConfig);
+    _inputConnection!.show();
+    _sendEditingValueToPlatform();
     _log.fine('Is attached to input client? ${_inputConnection!.attached}');
   }
 
@@ -119,18 +128,17 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     _inputConnection?.close();
 
     // Open a new connection with the new configuration.
-    _inputConnection = TextInput.attach(
-        this,
-        TextInputConfiguration(
-          autocorrect: autocorrect,
-          enableDeltaModel: true,
-          enableSuggestions: enableSuggestions,
-          inputAction: textInputAction,
-          inputType: textInputType,
-        ));
-    _inputConnection!
-      ..show()
-      ..setEditingState(currentTextEditingValue!);
+    final imeConfig = TextInputConfiguration(
+      autocorrect: autocorrect,
+      enableDeltaModel: true,
+      enableSuggestions: enableSuggestions,
+      inputAction: textInputAction,
+      inputType: textInputType,
+      keyboardAppearance: keyboardAppearance,
+    );
+    _inputConnection = _inputConnectionFactory?.call(this, imeConfig) ?? TextInput.attach(this, imeConfig);
+    _inputConnection!.show();
+    _sendEditingValueToPlatform();
   }
 
   void detachFromIme() {
@@ -167,20 +175,25 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   // to the platform as changes. This flag differentiates between the two situations.
   bool _sendTextChangesToPlatform = true;
 
-  void _onTextChange() {
+  void _onInnerControllerChange() {
     if (_sendTextChangesToPlatform) {
       _sendEditingValueToPlatform();
     }
 
-    // Forward the change notification to our listeners (because we wrap
-    // _realController as a proxy).
+    // This method was called in response to our inner controller sending a
+    // change notification. Forward that change notification to our listeners,
+    // because we wrap _realController as a proxy.
     notifyListeners();
   }
 
   TextEditingValue? _latestPlatformTextEditingValue;
 
   void _onReceivedTextEditingValueFromPlatform(TextEditingValue newValue) {
-    _latestPlatformTextEditingValue = newValue;
+    if (newValue == _latestPlatformTextEditingValue) {
+      // The value didn't change. Don't let us get into an infinite loop
+      // with the IME where it keeps sending us the same value over and over.
+      return;
+    }
 
     // We have to send the value back to the platform to acknowledge receipt.
     _sendEditingValueToPlatform();
@@ -189,6 +202,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   void _sendEditingValueToPlatform() {
     if (isAttachedToIme) {
       _log.fine('Sending TextEditingValue to platform: $currentTextEditingValue');
+      _latestPlatformTextEditingValue = currentTextEditingValue;
       _inputConnection!.setEditingState(currentTextEditingValue!);
     }
   }
@@ -445,8 +459,7 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
   }
 
   @override
-  void replaceSelectionWithTextAndUpstreamAttributions(
-      {required String replacementText, TextRange? newComposingRegion}) {
+  void replaceSelectionWithTextAndUpstreamAttributions({required String replacementText, TextRange? newComposingRegion}) {
     _realController.replaceSelectionWithTextAndUpstreamAttributions(
       replacementText: replacementText,
       newComposingRegion: newComposingRegion,
@@ -522,3 +535,5 @@ class ImeAttributedTextEditingController extends AttributedTextEditingController
     _realController.clear();
   }
 }
+
+typedef TextInputConnectionFactory = TextInputConnection Function(TextInputClient client, TextInputConfiguration configuration);
