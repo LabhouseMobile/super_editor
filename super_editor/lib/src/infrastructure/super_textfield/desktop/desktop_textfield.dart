@@ -167,9 +167,7 @@ class SuperDesktopTextFieldState extends State<SuperDesktopTextField> implements
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
-    _controller
-      ..removeListener(_onSelectionOrContentChange)
-      ..detachFromIme();
+    _controller.removeListener(_onSelectionOrContentChange);
     if (widget.textController == null) {
       _controller.dispose();
     }

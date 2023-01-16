@@ -176,7 +176,8 @@ void main() {
   });
 
   group('SuperTextField on some bad Android software keyboards', () {
-    testWidgetsOnAndroid('handles BACKSPACE key event instead of deletion for a collapsed selection (on Android)', (tester) async {
+    testWidgetsOnAndroid('handles BACKSPACE key event instead of deletion for a collapsed selection (on Android)',
+        (tester) async {
       final controller = AttributedTextEditingController(
         text: AttributedText(text: 'This is a text'),
       );
@@ -198,7 +199,8 @@ void main() {
       expect(controller.text.text, 'Thi is a text');
     });
 
-    testWidgetsOnAndroid('handles BACKSPACE key event instead of deletion for a expanded selection (on Android)', (tester) async {
+    testWidgetsOnAndroid('handles BACKSPACE key event instead of deletion for a expanded selection (on Android)',
+        (tester) async {
       final controller = AttributedTextEditingController(
         text: AttributedText(text: 'This is a text'),
       );
