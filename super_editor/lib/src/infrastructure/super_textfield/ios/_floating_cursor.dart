@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ListenableBuilder;
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/super_textfield.dart';
@@ -87,8 +87,7 @@ class FloatingCursorController with ChangeNotifier {
         _floatingCursorStartOffset = textLayout.getOffsetAtPosition(_textController.selection.extent);
         _floatingCursorCurrentOffset = point.offset;
 
-        final textPosition =
-            textLayout.getPositionNearestToOffset(_floatingCursorStartOffset! + _floatingCursorCurrentOffset!);
+        final textPosition = textLayout.getPositionNearestToOffset(_floatingCursorStartOffset! + _floatingCursorCurrentOffset!);
 
         _floatingCursorHeight = textLayout.getLineHeightAtPosition(textPosition);
 
@@ -99,8 +98,7 @@ class FloatingCursorController with ChangeNotifier {
       case FloatingCursorDragState.Update:
         _floatingCursorCurrentOffset = point.offset;
 
-        final textPosition =
-            textLayout.getPositionNearestToOffset(_floatingCursorStartOffset! + _floatingCursorCurrentOffset!);
+        final textPosition = textLayout.getPositionNearestToOffset(_floatingCursorStartOffset! + _floatingCursorCurrentOffset!);
 
         _floatingCursorHeight = textLayout.getLineHeightAtPosition(textPosition);
 

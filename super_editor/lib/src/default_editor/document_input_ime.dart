@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ListenableBuilder;
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
@@ -72,9 +72,7 @@ class DocumentImeInteractor extends StatefulWidget {
   State createState() => _DocumentImeInteractorState();
 }
 
-class _DocumentImeInteractorState extends State<DocumentImeInteractor>
-    with TextInputClient, DeltaTextInputClient
-    implements ImeInputOwner {
+class _DocumentImeInteractorState extends State<DocumentImeInteractor> with TextInputClient, DeltaTextInputClient implements ImeInputOwner {
   late FocusNode _focusNode;
 
   TextInputConnection? _inputConnection;
@@ -148,8 +146,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
         // of applying deltas because we might be in an inconsistent state. A sync
         // will be done when all the deltas have been applied.
         _inputConnection!.show();
-        editorImeLog.fine(
-            "Document composer changed while attached to IME. Re-serializing the document and sending to the IME.");
+        editorImeLog.fine("Document composer changed while attached to IME. Re-serializing the document and sending to the IME.");
         _syncImeWithDocumentAndComposer();
       } else if (!isAttachedToIme) {
         _attachToIme();
@@ -300,8 +297,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
 
     editorImeLog.fine("IME value after applying deltas: $currentTextEditingValue");
 
-    final hasDestructiveUpdate =
-        textEditingDeltas.where((element) => element is! TextEditingDeltaNonTextUpdate).toList().isNotEmpty;
+    final hasDestructiveUpdate = textEditingDeltas.where((element) => element is! TextEditingDeltaNonTextUpdate).toList().isNotEmpty;
     if (hasDestructiveUpdate && imeValueBeforeChange == currentTextEditingValue) {
       // Sometimes the IME reports changes to us, but our document doesn't change
       // in ways that's reflected in the IME. In this case, we need to "reset"
@@ -326,8 +322,7 @@ class _DocumentImeInteractorState extends State<DocumentImeInteractor>
       // In this situation, even though our TextEditingValue looks identical to what it
       // was before, we need to send our TextEditingValue to the OS so that the OS doesn't
       // think there's a "\n" sitting in the edit region.
-      editorImeLog.fine(
-          "Sending forceful update to IME because our local TextEditingValue didn't change, but the IME may have");
+      editorImeLog.fine("Sending forceful update to IME because our local TextEditingValue didn't change, but the IME may have");
       _inputConnection!.setEditingState(currentTextEditingValue);
     }
   }
@@ -493,9 +488,7 @@ class DocumentImeSerializer {
     // therefore it wouldn't report the backspace button.
     final selectedNode = _doc.getNode(_selection.extent)!;
     final selectedNodeIndex = _doc.getNodeIndexById(selectedNode.id);
-    return selectedNodeIndex > 0 &&
-        _selection.isCollapsed &&
-        _selection.extent.nodePosition == selectedNode.beginningPosition;
+    return selectedNodeIndex > 0 && _selection.isCollapsed && _selection.extent.nodePosition == selectedNode.beginningPosition;
   }
 
   bool get didPrependPlaceholder => _prependedPlaceholder.isNotEmpty;
@@ -647,8 +640,7 @@ class DocumentImeSerializer {
 
     final startNode = baseNodeIndex <= extentNodeIndex ? baseNode : extentNode;
     final startNodeIndex = _doc.getNodeIndexById(startNode.id);
-    final startPosition =
-        baseNodeIndex <= extentNodeIndex ? selection.base.nodePosition : selection.extent.nodePosition;
+    final startPosition = baseNodeIndex <= extentNodeIndex ? selection.base.nodePosition : selection.extent.nodePosition;
     final endNode = baseNodeIndex <= extentNodeIndex ? extentNode : baseNode;
     final endNodeIndex = _doc.getNodeIndexById(endNode.id);
     final endPosition = baseNodeIndex <= extentNodeIndex ? selection.extent.nodePosition : selection.base.nodePosition;
@@ -810,11 +802,7 @@ class ImeConfiguration {
           keyboardActionButton == other.keyboardActionButton;
 
   @override
-  int get hashCode =>
-      enableAutocorrect.hashCode ^
-      enableSuggestions.hashCode ^
-      keyboardBrightness.hashCode ^
-      keyboardActionButton.hashCode;
+  int get hashCode => enableAutocorrect.hashCode ^ enableSuggestions.hashCode ^ keyboardBrightness.hashCode ^ keyboardActionButton.hashCode;
 }
 
 /// Applies software keyboard edits to a document.
@@ -875,8 +863,8 @@ class SoftwareKeyboardHandler {
       return;
     }
 
-    editorImeLog.fine(
-        "Inserting text: ${delta.textInserted}, insertion offset: ${delta.insertionOffset}, ime selection: ${delta.selection}");
+    editorImeLog
+        .fine("Inserting text: ${delta.textInserted}, insertion offset: ${delta.insertionOffset}, ime selection: ${delta.selection}");
 
     insert(
       TextPosition(offset: delta.insertionOffset, affinity: delta.selection.affinity),
@@ -952,8 +940,7 @@ class SoftwareKeyboardHandler {
     final insertionSelection = docSerializer.imeToDocumentSelection(
       TextSelection.fromPosition(insertionPosition),
     );
-    editorImeLog
-        .fine("Updating the Document Composer's selection to place caret at insertion offset:\n$insertionSelection");
+    editorImeLog.fine("Updating the Document Composer's selection to place caret at insertion offset:\n$insertionSelection");
     final selectionBeforeInsertion = composer.selectionComponent.selection;
     composer.selectionComponent.updateSelection(insertionSelection, notifyListeners: true);
 
@@ -1115,9 +1102,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
       return;
     }
 
-    selection.isCollapsed
-        ? commonOps.toggleComposerAttributions(attributions)
-        : commonOps.toggleAttributionsOnSelection(attributions);
+    selection.isCollapsed ? commonOps.toggleComposerAttributions(attributions) : commonOps.toggleAttributionsOnSelection(attributions);
   }
 
   void _convertToHeader1() {
@@ -1255,16 +1240,14 @@ class KeyboardEditingToolbar extends StatelessWidget {
                               ),
                               IconButton(
                                 onPressed: isSingleNodeSelected &&
-                                        (selectedNode is TextNode &&
-                                            selectedNode.getMetadataValue('blockType') != header1Attribution)
+                                        (selectedNode is TextNode && selectedNode.getMetadataValue('blockType') != header1Attribution)
                                     ? _convertToHeader1
                                     : null,
                                 icon: const Icon(Icons.title),
                               ),
                               IconButton(
                                 onPressed: isSingleNodeSelected &&
-                                        (selectedNode is TextNode &&
-                                            selectedNode.getMetadataValue('blockType') != header2Attribution)
+                                        (selectedNode is TextNode && selectedNode.getMetadataValue('blockType') != header2Attribution)
                                     ? _convertToHeader2
                                     : null,
                                 icon: const Icon(Icons.title),
@@ -1272,8 +1255,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                               ),
                               IconButton(
                                 onPressed: isSingleNodeSelected &&
-                                        ((selectedNode is ParagraphNode &&
-                                                selectedNode.hasMetadataValue('blockType')) ||
+                                        ((selectedNode is ParagraphNode && selectedNode.hasMetadataValue('blockType')) ||
                                             (selectedNode is TextNode && selectedNode is! ParagraphNode))
                                     ? _convertToParagraph
                                     : null,
@@ -1290,8 +1272,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                               IconButton(
                                 onPressed: isSingleNodeSelected &&
                                         (selectedNode is TextNode && selectedNode is! ListItemNode ||
-                                            (selectedNode is ListItemNode &&
-                                                selectedNode.type != ListItemType.unordered))
+                                            (selectedNode is ListItemNode && selectedNode.type != ListItemType.unordered))
                                     ? _convertToUnorderedListItem
                                     : null,
                                 icon: const Icon(Icons.list),
@@ -1306,9 +1287,7 @@ class KeyboardEditingToolbar extends StatelessWidget {
                                 icon: const Icon(Icons.format_quote),
                               ),
                               IconButton(
-                                onPressed: isSingleNodeSelected &&
-                                        selectedNode is ParagraphNode &&
-                                        selectedNode.text.text.isEmpty
+                                onPressed: isSingleNodeSelected && selectedNode is ParagraphNode && selectedNode.text.text.isEmpty
                                     ? _convertToHr
                                     : null,
                                 icon: const Icon(Icons.horizontal_rule),

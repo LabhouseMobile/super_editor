@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ListenableBuilder;
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
@@ -98,8 +98,7 @@ class IosDocumentTouchEditingControls extends StatefulWidget {
   State createState() => _IosDocumentTouchEditingControlsState();
 }
 
-class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditingControls>
-    with SingleTickerProviderStateMixin {
+class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditingControls> with SingleTickerProviderStateMixin {
   // These global keys are assigned to each draggable handle to
   // prevent a strange dragging issue.
   //
@@ -251,8 +250,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
                     // Build the floating cursor
                     _buildFloatingCursor(),
                     // Build the editing toolbar
-                    if (widget.editingController.shouldDisplayToolbar && widget.editingController.isToolbarPositioned)
-                      _buildToolbar(),
+                    if (widget.editingController.shouldDisplayToolbar && widget.editingController.isToolbarPositioned) _buildToolbar(),
                     // Build the focal point for the magnifier
                     if (widget.magnifierFocalPointOffset != null) _buildMagnifierFocalPoint(),
                     // Build the magnifier
@@ -274,8 +272,7 @@ class _IosDocumentTouchEditingControlsState extends State<IosDocumentTouchEditin
   }
 
   List<Widget> _buildHandles() {
-    if (!widget.editingController.shouldDisplayCollapsedHandle &&
-        !widget.editingController.shouldDisplayExpandedHandles) {
+    if (!widget.editingController.shouldDisplayCollapsedHandle && !widget.editingController.shouldDisplayExpandedHandles) {
       editorGesturesLog.finer('Not building overlay handles because they aren\'t desired');
       return [];
     }
