@@ -807,7 +807,7 @@ class ImeConfiguration {
 
 /// Applies software keyboard edits to a document.
 class SoftwareKeyboardHandler {
-  const SoftwareKeyboardHandler({
+  SoftwareKeyboardHandler({
     required this.editor,
     required this.composer,
     required this.commonOps,
@@ -823,6 +823,10 @@ class SoftwareKeyboardHandler {
 
     for (final delta in textEditingDeltas) {
       editorImeLog.info("Applying delta: $delta");
+
+      final execution = editor.rules.apply(editor, composer, delta);
+      if (execution != ExecutionInstruction.continueExecution) continue;
+
       if (delta is TextEditingDeltaInsertion) {
         _applyInsertion(delta);
       } else if (delta is TextEditingDeltaReplacement) {

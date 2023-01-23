@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:super_editor/addon/rules.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:uuid/uuid.dart';
@@ -26,10 +27,19 @@ class DocumentEditor {
   DocumentEditor({
     required this.document,
     required List<EditorRequestHandler> requestHandlers,
+    List<EditorRule> rules = const [],
   })  : _requestHandlers = requestHandlers,
+        _rules = EditorRules(rules: rules),
         context = EditorContext() {
     context.put("document", document);
   }
+
+  final EditorRules _rules;
+
+  /// Chain of Responsability that allows to customize the editor experience.
+  ///
+  /// Receives a [TextEditingDelta] to insert new [EditorRequest].
+  EditorRules get rules => _rules;
 
   final MutableDocument document;
 
@@ -56,8 +66,7 @@ class DocumentEditor {
     }
 
     if (command == null) {
-      throw Exception(
-          "Could not handle EditorRequest. DocumentEditor doesn't have a handler that recognizes the request: $request");
+      throw Exception("Could not handle EditorRequest. DocumentEditor doesn't have a handler that recognizes the request: $request");
     }
 
     // Add the command that we're processing to the stack. One command might run other commands. We
@@ -388,9 +397,7 @@ class MutableDocument implements Document {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is MutableDocument &&
-          runtimeType == other.runtimeType &&
-          const DeepCollectionEquality().equals(_nodes, other.nodes);
+      other is MutableDocument && runtimeType == other.runtimeType && const DeepCollectionEquality().equals(_nodes, other.nodes);
 
   @override
   int get hashCode => _nodes.hashCode;
