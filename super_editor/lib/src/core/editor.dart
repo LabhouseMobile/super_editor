@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:collection/collection.dart';
+import 'package:super_editor/addon/rules.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:uuid/uuid.dart';
 
@@ -50,11 +51,13 @@ class Editor implements RequestDispatcher {
   ///  - [listeners], which contains an initial set of [EditListener]s.
   Editor({
     required Map<String, Editable> editables,
+    List<EditorRule>? rules,
     List<EditRequestHandler>? requestHandlers,
     List<EditReaction>? reactionPipeline,
     List<EditListener>? listeners,
   })  : requestHandlers = requestHandlers ?? [],
         reactionPipeline = reactionPipeline ?? [],
+        _rules = rules ?? [],
         _changeListeners = listeners ?? [] {
     context = EditContext(editables);
     _commandExecutor = _DocumentEditorCommandExecutor(context);
@@ -64,6 +67,10 @@ class Editor implements RequestDispatcher {
     reactionPipeline.clear();
     _changeListeners.clear();
   }
+
+  final List<EditorRule> _rules;
+
+  EditorRules get rules => EditorRules(rules: _rules);
 
   /// Chain of Responsibility that maps a given [EditRequest] to an [EditCommand].
   final List<EditRequestHandler> requestHandlers;

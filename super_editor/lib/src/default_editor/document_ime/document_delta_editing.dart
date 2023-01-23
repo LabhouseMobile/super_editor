@@ -14,6 +14,7 @@ import 'package:super_editor/src/default_editor/selection_upstream_downstream.da
 import 'package:super_editor/src/default_editor/tasks.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
+import 'package:super_editor/src/infrastructure/keyboard.dart';
 
 import 'document_serialization.dart';
 
@@ -75,6 +76,10 @@ class TextDeltasDocumentEditor {
       editorImeLog.info("Applying delta: $delta");
 
       _nextImeValue = delta.apply(_previousImeValue);
+
+      final execution = editor.rules.apply(editor, selection.value, delta);
+      if (execution != ExecutionInstruction.continueExecution) continue;
+
       if (delta is TextEditingDeltaInsertion) {
         _applyInsertion(delta);
       } else if (delta is TextEditingDeltaReplacement) {
@@ -387,6 +392,7 @@ class TextDeltasDocumentEditor {
   }
 
   void insertNewline() {
+    if (editor.rules.rules.isNotEmpty) return;
     if (_nextImeValue != null) {
       _insertNewlineInDeltas();
     } else {
