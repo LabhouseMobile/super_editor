@@ -1148,7 +1148,13 @@ class CommonEditorOperations {
     DocumentPosition newSelectionPosition;
 
     if (baseNodeIndex != extentNodeIndex) {
-      if (topNodePosition == topNode.beginningPosition && bottomNodePosition == bottomNode.endPosition) {
+      if (topNodePosition == topNode.beginningPosition && bottomNodePosition == bottomNode.endPosition ||
+          (topNodePosition is TextNodePosition &&
+              topNode.beginningPosition is TextNodePosition &&
+              topNodePosition.offset == (topNode.beginningPosition as TextNodePosition).offset &&
+              bottomNodePosition is TextNodePosition &&
+              bottomNode.endPosition is TextNodePosition &&
+              bottomNodePosition.offset == (bottomNode.endPosition as TextNodePosition).offset)) {
         // All nodes in the selection will be deleted. Assume that the base
         // node will be retained and converted into a paragraph, if it's not
         // already a paragraph.
