@@ -1147,14 +1147,18 @@ class CommonEditorOperations {
 
     DocumentPosition newSelectionPosition;
 
+    final isStartOfTopNode = topNodePosition == topNode.beginningPosition ||
+        (topNodePosition is TextNodePosition &&
+            topNode.beginningPosition is TextNodePosition &&
+            topNodePosition.offset == (topNode.beginningPosition as TextNodePosition).offset);
+
+    final isEndOfBottomNode = bottomNodePosition == bottomNode.endPosition ||
+        (bottomNodePosition is TextNodePosition &&
+            bottomNode.endPosition is TextNodePosition &&
+            bottomNodePosition.offset == (bottomNode.endPosition as TextNodePosition).offset);
+
     if (baseNodeIndex != extentNodeIndex) {
-      if (topNodePosition == topNode.beginningPosition && bottomNodePosition == bottomNode.endPosition ||
-          (topNodePosition is TextNodePosition &&
-              topNode.beginningPosition is TextNodePosition &&
-              topNodePosition.offset == (topNode.beginningPosition as TextNodePosition).offset &&
-              bottomNodePosition is TextNodePosition &&
-              bottomNode.endPosition is TextNodePosition &&
-              bottomNodePosition.offset == (bottomNode.endPosition as TextNodePosition).offset)) {
+      if (isStartOfTopNode && isEndOfBottomNode) {
         // All nodes in the selection will be deleted. Assume that the base
         // node will be retained and converted into a paragraph, if it's not
         // already a paragraph.
@@ -1162,14 +1166,14 @@ class CommonEditorOperations {
           nodeId: baseNode.id,
           nodePosition: const TextNodePosition(offset: 0),
         );
-      } else if (topNodePosition == topNode.beginningPosition) {
+      } else if (isStartOfTopNode) {
         // The top node will be deleted, but only part of the bottom node
         // will be deleted.
         newSelectionPosition = DocumentPosition(
           nodeId: bottomNode.id,
           nodePosition: bottomNode.beginningPosition,
         );
-      } else if (bottomNodePosition == bottomNode.endPosition) {
+      } else if (isEndOfBottomNode) {
         // The bottom node will be deleted, but only part of the top node
         // will be deleted.
         newSelectionPosition = DocumentPosition(
