@@ -498,7 +498,7 @@ class DeleteSelectionCommand implements EditorCommand {
         replaceWithParagraph: replaceWithParagraph,
       );
     } else if (nodePosition is TextPosition && node is TextNode) {
-      if (nodePosition == node.beginningPosition) {
+      if (nodePosition.offset == node.beginningPosition.offset) {
         // All text is selected. Delete the node.
         document.deleteNode(node);
 
@@ -536,7 +536,7 @@ class DeleteSelectionCommand implements EditorCommand {
         replaceWithParagraph: false,
       );
     } else if (nodePosition is TextPosition && node is TextNode) {
-      if (nodePosition == node.endPosition) {
+      if (nodePosition.offset == node.endPosition.offset) {
         // All text is selected. Delete the node.
         document.deleteNode(node);
 
