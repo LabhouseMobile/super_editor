@@ -443,7 +443,7 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
   }
 
   ScrollableState? _findAncestorScrollable(BuildContext context) {
-    final ancestorScrollable = Scrollable.of(context);
+    final ancestorScrollable = Scrollable.maybeOf(context);
     if (ancestorScrollable == null) {
       return null;
     }
@@ -493,7 +493,9 @@ class SuperIOSTextFieldState extends State<SuperIOSTextField>
                 final isTextEmpty = _textEditingController.text.text.isEmpty;
                 final showHint = widget.hintBuilder != null &&
                     ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
-                        (isTextEmpty && !_focusNode.hasFocus && widget.hintBehavior == HintBehavior.displayHintUntilFocus));
+                        (isTextEmpty &&
+                            !_focusNode.hasFocus &&
+                            widget.hintBehavior == HintBehavior.displayHintUntilFocus));
 
                 return CompositedTransformTarget(
                   link: _textContentLayerLink,
