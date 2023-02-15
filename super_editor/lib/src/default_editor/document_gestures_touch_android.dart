@@ -341,6 +341,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // laid out yet. Wait until the next frame to update visuals.
     WidgetsBinding.instance.scheduleFrame();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (!mounted) {
+        return;
+      }
+
       _updateHandlesAfterSelectionOrLayoutChange();
     });
   }
@@ -492,8 +496,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         return;
       }
 
-      _clearSelection();
-
       bool didSelectContent = _selectWordAt(
         docPosition: docPosition,
         docLayout: _docLayout,
@@ -547,7 +549,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }
 
   void _onTripleTapDown(TapDownDetails details) {
-    editorGesturesLog.info("Triple down down on document");
+    editorGesturesLog.info("Triple tap down on document");
     final docOffset = _getDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
@@ -561,8 +563,6 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       if (!tappedComponent.isVisualSelectionSupported()) {
         return;
       }
-
-      _clearSelection();
 
       final didSelectParagraph = _selectParagraphAt(
         docPosition: docPosition,

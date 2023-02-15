@@ -70,7 +70,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   /// multiple nodes are selected, no node is selected, or the selected
   /// node is not a standard text block.
   bool _isConvertibleNode() {
-    final selection = widget.composer.selection;
+    final selection = widget.composer.selectionComponent.selection;
     if (selection == null || selection.base.nodeId != selection.extent.nodeId) {
       return false;
     }
@@ -83,7 +83,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   ///
   /// Throws an exception if the currently selected node is not a text node.
   _TextType _getCurrentTextType() {
-    final selection = widget.composer.selection!;
+    final selection = widget.composer.selectionComponent.selection!;
     final selectedNode = widget.editor.document.getNodeById(selection.extent.nodeId);
     if (selectedNode is ParagraphNode) {
       final type = selectedNode.metadata['blockType'];
@@ -110,7 +110,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   ///
   /// Throws an exception if the currently selected node is not a text node.
   TextAlign _getCurrentTextAlignment() {
-    final selection = widget.composer.selection!;
+    final selection = widget.composer.selectionComponent.selection!;
     final selectedNode = widget.editor.document.getNodeById(selection.extent.nodeId);
     if (selectedNode is ParagraphNode) {
       final align = selectedNode.metadata['textAlign'] as String?;
@@ -134,7 +134,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   /// Returns true if a single text node is selected and that text node
   /// is capable of respecting alignment, returns false otherwise.
   bool _isTextAlignable() {
-    final selection = widget.composer.selection;
+    final selection = widget.composer.selectionComponent.selection;
     if (selection == null || selection.base.nodeId != selection.extent.nodeId) {
       return false;
     }
@@ -161,31 +161,31 @@ class _EditorToolbarState extends State<EditorToolbar> {
     }
 
     if (_isListItem(existingTextType) && _isListItem(newType)) {
-      widget.editor.executeCommand(
-        ChangeListItemTypeCommand(
-          nodeId: widget.composer.selection!.extent.nodeId,
+      widget.editor.execute(
+        ChangeListItemTypeRequest(
+          nodeId: widget.composer.selectionComponent.selection!.extent.nodeId,
           newType: newType == _TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
         ),
       );
     } else if (_isListItem(existingTextType) && !_isListItem(newType)) {
-      widget.editor.executeCommand(
-        ConvertListItemToParagraphCommand(
-          nodeId: widget.composer.selection!.extent.nodeId,
+      widget.editor.execute(
+        ConvertListItemToParagraphRequest(
+          nodeId: widget.composer.selectionComponent.selection!.extent.nodeId,
           paragraphMetadata: {
             'blockType': _getBlockTypeAttribution(newType),
           },
         ),
       );
     } else if (!_isListItem(existingTextType) && _isListItem(newType)) {
-      widget.editor.executeCommand(
-        ConvertParagraphToListItemCommand(
-          nodeId: widget.composer.selection!.extent.nodeId,
+      widget.editor.execute(
+        ConvertParagraphToListItemRequest(
+          nodeId: widget.composer.selectionComponent.selection!.extent.nodeId,
           type: newType == _TextType.orderedListItem ? ListItemType.ordered : ListItemType.unordered,
         ),
       );
     } else {
       // Apply a new block type to an existing paragraph node.
-      final existingNode = widget.editor.document.getNodeById(widget.composer.selection!.extent.nodeId)!;
+      final existingNode = widget.editor.document.getNodeById(widget.composer.selectionComponent.selection!.extent.nodeId)!;
       (existingNode as ParagraphNode).metadata['blockType'] = _getBlockTypeAttribution(newType);
 
       // Merely changing the blockType of the ParagraphNode does not trigger any of the document listeners.
@@ -194,7 +194,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
       // ParagraphNode would change only if something else in the document changed. This is a bit hacky.
       //
       // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
-      existingNode.notifyListeners();
+      widget.composer.selectionComponent.selectionNotifier.notifyListeners();
     }
   }
 
@@ -224,9 +224,9 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
   /// Toggles bold styling for the current selected text.
   void _toggleBold() {
-    widget.editor.executeCommand(
-      ToggleTextAttributionsCommand(
-        documentSelection: widget.composer.selection!,
+    widget.editor.execute(
+      ToggleTextAttributionsRequest(
+        documentSelection: widget.composer.selectionComponent.selection!,
         attributions: {boldAttribution},
       ),
     );
@@ -234,9 +234,9 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
   /// Toggles italic styling for the current selected text.
   void _toggleItalics() {
-    widget.editor.executeCommand(
-      ToggleTextAttributionsCommand(
-        documentSelection: widget.composer.selection!,
+    widget.editor.execute(
+      ToggleTextAttributionsRequest(
+        documentSelection: widget.composer.selectionComponent.selection!,
         attributions: {italicsAttribution},
       ),
     );
@@ -244,9 +244,9 @@ class _EditorToolbarState extends State<EditorToolbar> {
 
   /// Toggles strikethrough styling for the current selected text.
   void _toggleStrikethrough() {
-    widget.editor.executeCommand(
-      ToggleTextAttributionsCommand(
-        documentSelection: widget.composer.selection!,
+    widget.editor.execute(
+      ToggleTextAttributionsRequest(
+        documentSelection: widget.composer.selectionComponent.selection!,
         attributions: {strikethroughAttribution},
       ),
     );
@@ -268,7 +268,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   /// Returns any link-based [AttributionSpan]s that appear partially
   /// or wholly within the current text selection.
   Set<AttributionSpan> _getSelectedLinkSpans() {
-    final selection = widget.composer.selection;
+    final selection = widget.composer.selectionComponent.selection;
     final baseOffset = (selection!.base.nodePosition as TextPosition).offset;
     final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
     final selectionStart = min(baseOffset, extentOffset);
@@ -289,7 +289,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   /// Takes appropriate action when the toolbar's link button is
   /// pressed.
   void _onLinkPressed() {
-    final selection = widget.composer.selection;
+    final selection = widget.composer.selectionComponent.selection;
     final baseOffset = (selection!.base.nodePosition as TextPosition).offset;
     final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
     final selectionStart = min(baseOffset, extentOffset);
@@ -342,7 +342,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
   void _applyLink() {
     final url = _urlController.text;
 
-    final selection = widget.composer.selection;
+    final selection = widget.composer.selectionComponent.selection;
     final baseOffset = (selection!.base.nodePosition as TextPosition).offset;
     final extentOffset = (selection.extent.nodePosition as TextPosition).offset;
     final selectionStart = min(baseOffset, extentOffset);
@@ -410,7 +410,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
         return;
     }
 
-    final selectedNode = widget.editor.document.getNodeById(widget.composer.selection!.extent.nodeId)! as ParagraphNode;
+    final selectedNode = widget.editor.document.getNodeById(widget.composer.selectionComponent.selection!.extent.nodeId)! as ParagraphNode;
     selectedNode.metadata['textAlign'] = newAlignmentValue;
   }
 
@@ -440,7 +440,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
     return ValueListenableBuilder(
       valueListenable: widget.anchor,
       builder: (context, offset, child) {
-        if (widget.anchor.value == null || widget.composer.selection == null) {
+        if (widget.anchor.value == null || widget.composer.selectionComponent.selection == null) {
           // When no anchor position is available, or the user hasn't
           // selected any text, show nothing.
           return const SizedBox();
@@ -496,13 +496,15 @@ class _EditorToolbarState extends State<EditorToolbar> {
                 child: DropdownButton<_TextType>(
                   value: _getCurrentTextType(),
                   items: _TextType.values
-                      .map((textType) => DropdownMenuItem<_TextType>(
-                            value: textType,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 16.0),
-                              child: Text(_getTextTypeName(textType)),
-                            ),
-                          ))
+                      .map(
+                        (textType) => DropdownMenuItem<_TextType>(
+                          value: textType,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 16.0),
+                            child: Text(_getTextTypeName(textType)),
+                          ),
+                        ),
+                      )
                       .toList(),
                   icon: const Icon(Icons.arrow_drop_down),
                   style: const TextStyle(
@@ -560,13 +562,15 @@ class _EditorToolbarState extends State<EditorToolbar> {
                 child: DropdownButton<TextAlign>(
                   value: _getCurrentTextAlignment(),
                   items: [TextAlign.left, TextAlign.center, TextAlign.right, TextAlign.justify]
-                      .map((textAlign) => DropdownMenuItem<TextAlign>(
-                            value: textAlign,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 8.0),
-                              child: Icon(_buildTextAlignIcon(textAlign)),
-                            ),
-                          ))
+                      .map(
+                        (textAlign) => DropdownMenuItem<TextAlign>(
+                          value: textAlign,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 8.0),
+                            child: Icon(_buildTextAlignIcon(textAlign)),
+                          ),
+                        ),
+                      )
                       .toList(),
                   icon: const Icon(Icons.arrow_drop_down),
                   style: const TextStyle(

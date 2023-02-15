@@ -1,7 +1,6 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:super_editor/src/core/document.dart';
-import 'package:super_editor/src/default_editor/document_input_ime.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
 import 'document_selection.dart';
@@ -15,9 +14,7 @@ class DocumentComposer with ChangeNotifier {
   /// desired.
   DocumentComposer({
     DocumentSelection? initialSelection,
-    ImeConfiguration? imeConfiguration,
   })  : selectionComponent = SelectionComponent(initialSelection),
-        imeConfiguration = ValueNotifier(imeConfiguration ?? const ImeConfiguration()),
         _preferences = ComposerPreferences() {
     _preferences.addListener(() {
       editorLog.fine("Composer preferences changed");
@@ -34,7 +31,11 @@ class DocumentComposer with ChangeNotifier {
 
   final SelectionComponent selectionComponent;
 
-  final ValueNotifier<ImeConfiguration> imeConfiguration;
+  /// The current composing region, which signifies spans of text
+  /// that the IME is thinking about changing.
+  ///
+  /// Only valid when editing a document with an IME input method.
+  final composingRegion = ValueNotifier<DocumentRange?>(null);
 
   final ComposerPreferences _preferences;
 

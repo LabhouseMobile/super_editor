@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:super_editor/super_editor.dart';
-
-import 'editor_toolbar.dart';
+import 'package:website/homepage/editor_toolbar.dart';
 
 /// A Super Editor that displays itself on top of a white sheet of paper
 /// with a popup editor toolbar.
@@ -41,11 +40,11 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
     super.initState();
 
     // Create the initial document content.
-    _doc = _createInitialDocument()..addListener(_updateToolbarDisplay);
+    _doc = _createInitialDocument()..addListener((_) => _updateToolbarDisplay());
 
     // Create the DocumentEditor, which is responsible for applying all
     // content changes to the Document.
-    _docEditor = DocumentEditor(document: _doc);
+    _docEditor = DocumentEditor(document: _doc, requestHandlers: []);
 
     // Create the DocumentComposer, which keeps track of the user's text
     // selection and the current input styles, e.g., bold or italics.
@@ -97,7 +96,7 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
 
       // Display the toolbar in the application overlay.
       final overlay = Overlay.of(context);
-      overlay!.insert(_formatBarOverlayEntry!);
+      overlay.insert(_formatBarOverlayEntry!);
 
       // Schedule a callback after this frame to locate the selection
       // bounds on the screen and display the toolbar near the selected
@@ -114,8 +113,8 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
     }
 
     final docBoundingBox = (_docLayoutKey.currentState! as DocumentLayout).getRectForSelection(
-      _composer.selection!.base,
-      _composer.selection!.extent,
+      _composer.selectionComponent.selection!.base,
+      _composer.selectionComponent.selection!.extent,
     );
     final parentBox = context.findRenderObject()! as RenderBox;
     final docBox = _docLayoutKey.currentContext!.findRenderObject()! as RenderBox;
@@ -154,7 +153,7 @@ class _FeaturedEditorState extends State<FeaturedEditor> {
   }
 
   void _updateToolbarDisplay() {
-    final selection = _composer.selection;
+    final selection = _composer.selectionComponent.selection;
     if (selection == null) {
       // Nothing is selected. We don't want to show a toolbar
       // in this case.

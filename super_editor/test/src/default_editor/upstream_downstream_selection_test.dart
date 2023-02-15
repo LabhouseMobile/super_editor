@@ -12,47 +12,48 @@ void main() {
   group("Upstream-downstream block", () {
     group("move caret up", () {
       testWidgets("up arrow moves text caret to upstream edge of block from node below", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(nodeId: "3", nodePosition: TextNodePosition(offset: 0)),
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
         await tester.pump();
 
         expect(composer.selectionComponent.selection!.isCollapsed, true);
         expect(composer.selectionComponent.selection!.extent.nodeId, "2");
-        expect(composer.selectionComponent.selection!.extent.nodePosition,
-            const UpstreamDownstreamNodePosition.upstream());
+        expect(composer.selectionComponent.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.upstream());
       });
 
       testWidgets("up arrow moves text caret to downstream edge of block from node below", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             // The caret needs to be on the 1st line, in the right half of the line.
             position: DocumentPosition(nodeId: "3", nodePosition: TextNodePosition(offset: 33)),
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
         await tester.pump();
 
         expect(composer.selectionComponent.selection!.isCollapsed, true);
         expect(composer.selectionComponent.selection!.extent.nodeId, "2");
-        expect(composer.selectionComponent.selection!.extent.nodePosition,
-            const UpstreamDownstreamNodePosition.downstream());
+        expect(composer.selectionComponent.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.downstream());
       });
 
       testWidgets("up arrow moves caret from upstream edge to text node above", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.upstream()),
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
         await tester.pump();
@@ -63,12 +64,13 @@ void main() {
       });
 
       testWidgets("up arrow moves caret from downstream edge to text node above", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
         await tester.pump();
@@ -79,12 +81,13 @@ void main() {
       });
 
       testWidgets("left arrow moves caret to text node above", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.upstream()),
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
         await tester.pump();
@@ -96,12 +99,13 @@ void main() {
       });
 
       testWidgets("right arrow moves caret to text node below", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
         await tester.pump();
@@ -113,84 +117,85 @@ void main() {
       });
 
       testWidgets("delete moves caret down to block from node above", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 37)),
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.delete);
         await tester.pump();
 
         expect(composer.selectionComponent.selection!.isCollapsed, true);
         expect(composer.selectionComponent.selection!.extent.nodeId, "2");
-        expect(composer.selectionComponent.selection!.extent.nodePosition,
-            const UpstreamDownstreamNodePosition.upstream());
+        expect(composer.selectionComponent.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.upstream());
       });
 
       testWidgets("backspace moves caret up to block from node below", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(nodeId: "3", nodePosition: TextNodePosition(offset: 0)),
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();
 
         expect(composer.selectionComponent.selection!.isCollapsed, true);
         expect(composer.selectionComponent.selection!.extent.nodeId, "2");
-        expect(composer.selectionComponent.selection!.extent.nodePosition,
-            const UpstreamDownstreamNodePosition.downstream());
+        expect(composer.selectionComponent.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.downstream());
       });
     });
 
     group("move caret down", () {
       testWidgets("text caret moves to upstream edge of block from node above", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             // Caret needs to sit on the left half of the last line in the paragraph.
             position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 0)),
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
         await tester.pump();
 
         expect(composer.selectionComponent.selection!.isCollapsed, true);
         expect(composer.selectionComponent.selection!.extent.nodeId, "2");
-        expect(composer.selectionComponent.selection!.extent.nodePosition,
-            const UpstreamDownstreamNodePosition.upstream());
+        expect(composer.selectionComponent.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.upstream());
       });
 
       testWidgets("text caret moves to downstream edge of block from node above", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             // Caret needs to sit in right half of the last line in the paragraph.
             position: DocumentPosition(nodeId: "1", nodePosition: TextNodePosition(offset: 37)),
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
         await tester.pump();
 
         expect(composer.selectionComponent.selection!.isCollapsed, true);
         expect(composer.selectionComponent.selection!.extent.nodeId, "2");
-        expect(composer.selectionComponent.selection!.extent.nodePosition,
-            const UpstreamDownstreamNodePosition.downstream());
+        expect(composer.selectionComponent.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.downstream());
       });
 
       testWidgets("upstream block caret moves to text node below", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.upstream()),
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
         await tester.pump();
@@ -201,12 +206,13 @@ void main() {
       });
 
       testWidgets("downstream block caret moves to text node below", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
         await tester.pump();
@@ -217,12 +223,13 @@ void main() {
       });
 
       testWidgets("right arrow moves caret to text node below", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
         await tester.pump();
@@ -236,48 +243,49 @@ void main() {
 
     group("move caret horizontally", () {
       testWidgets("right arrow moves caret downstream", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.upstream()),
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
         await tester.pump();
 
         expect(composer.selectionComponent.selection!.isCollapsed, true);
         expect(composer.selectionComponent.selection!.extent.nodeId, "2");
-        expect(composer.selectionComponent.selection!.extent.nodePosition,
-            const UpstreamDownstreamNodePosition.downstream());
+        expect(composer.selectionComponent.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.downstream());
       });
 
       testWidgets("left arrow moves caret upstream", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
         await tester.pump();
 
         expect(composer.selectionComponent.selection!.isCollapsed, true);
         expect(composer.selectionComponent.selection!.extent.nodeId, "2");
-        expect(composer.selectionComponent.selection!.extent.nodePosition,
-            const UpstreamDownstreamNodePosition.upstream());
+        expect(composer.selectionComponent.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.upstream());
       });
     });
 
     group("deletion", () {
       testWidgets("backspace moves caret to node above when caret is on upstream edge", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.upstream()),
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();
@@ -288,17 +296,13 @@ void main() {
       });
 
       testWidgets("backspace removes block node when caret is on downstream edge", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(
-          _buildHardwareKeyboardEditor(
-            paragraphThenHrThenParagraphDoc(),
-            composer,
-          ),
-        );
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();
@@ -309,12 +313,13 @@ void main() {
       });
 
       testWidgets("delete moves caret to node below when caret is at downstream edge", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.delete);
         await tester.pump();
@@ -325,12 +330,13 @@ void main() {
       });
 
       testWidgets("delete removes block node when caret is at upstream edge", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection.collapsed(
             position: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.upstream()),
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.delete);
         await tester.pump();
@@ -341,13 +347,14 @@ void main() {
       });
 
       testWidgets("backspace removes block node when selected", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection(
             base: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.upstream()),
             extent: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
         await tester.pump();
@@ -358,13 +365,14 @@ void main() {
       });
 
       testWidgets("delete removes block node when selected", (tester) async {
+        final document = paragraphThenHrThenParagraphDoc();
         final composer = DocumentComposer(
           initialSelection: const DocumentSelection(
             base: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.upstream()),
             extent: DocumentPosition(nodeId: "2", nodePosition: UpstreamDownstreamNodePosition.downstream()),
           ),
         );
-        await tester.pumpWidget(_buildHardwareKeyboardEditor(paragraphThenHrThenParagraphDoc(), composer));
+        await tester.pumpWidget(_buildHardwareKeyboardEditor(document, composer));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.delete);
         await tester.pump();
@@ -445,8 +453,7 @@ void main() {
 
         expect(composer.selectionComponent.selection!.isCollapsed, true);
         expect(composer.selectionComponent.selection!.extent.nodeId, "1");
-        expect(composer.selectionComponent.selection!.extent.nodePosition,
-            const UpstreamDownstreamNodePosition.upstream());
+        expect(composer.selectionComponent.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.upstream());
       });
 
       testWidgets("delete does nothing at end of document", (tester) async {
@@ -463,8 +470,7 @@ void main() {
 
         expect(composer.selectionComponent.selection!.isCollapsed, true);
         expect(composer.selectionComponent.selection!.extent.nodeId, "1");
-        expect(composer.selectionComponent.selection!.extent.nodePosition,
-            const UpstreamDownstreamNodePosition.downstream());
+        expect(composer.selectionComponent.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.downstream());
       });
     });
 
@@ -567,8 +573,7 @@ void main() {
         expect(composer.selectionComponent.selection!.isCollapsed, true);
         expect(document.nodes.length, 1);
         expect(document.nodes[0], isA<HorizontalRuleNode>());
-        expect(composer.selectionComponent.selection!.extent.nodePosition,
-            const UpstreamDownstreamNodePosition.upstream());
+        expect(composer.selectionComponent.selection!.extent.nodePosition, const UpstreamDownstreamNodePosition.upstream());
       });
     });
   });

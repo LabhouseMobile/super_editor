@@ -68,8 +68,7 @@ class CommonEditorOperations {
       return false;
     }
 
-    composer.selectionComponent
-        .updateSelection(DocumentSelection.collapsed(position: documentPosition), notifyListeners: true);
+    composer.selectionComponent.updateSelection(DocumentSelection.collapsed(position: documentPosition), notifyListeners: true);
     return true;
   }
 
@@ -96,8 +95,7 @@ class CommonEditorOperations {
     }
 
     if (position != null) {
-      composer.selectionComponent
-          .updateSelection(DocumentSelection.collapsed(position: position), notifyListeners: true);
+      composer.selectionComponent.updateSelection(DocumentSelection.collapsed(position: position), notifyListeners: true);
       return true;
     } else {
       return false;
@@ -223,8 +221,7 @@ class CommonEditorOperations {
       return false;
     }
 
-    composer.selectionComponent
-        .updateSelection(composer.selectionComponent.selection!.collapse(), notifyListeners: true);
+    composer.selectionComponent.updateSelection(composer.selectionComponent.selection!.collapse(), notifyListeners: true);
 
     return true;
   }
@@ -258,9 +255,8 @@ class CommonEditorOperations {
     }
 
     if (!composer.selectionComponent.selection!.isCollapsed && !expand) {
-      composer.selectionComponent.updateSelection(
-          composer.selectionComponent.selection!.collapseUpstream(editor.document),
-          notifyListeners: true);
+      composer.selectionComponent
+          .updateSelection(composer.selectionComponent.selection!.collapseUpstream(editor.document), notifyListeners: true);
       return true;
     }
 
@@ -276,8 +272,7 @@ class CommonEditorOperations {
     }
 
     String newExtentNodeId = nodeId;
-    NodePosition? newExtentNodePosition =
-        extentComponent.movePositionLeft(currentExtent.nodePosition, movementModifier);
+    NodePosition? newExtentNodePosition = extentComponent.movePositionLeft(currentExtent.nodePosition, movementModifier);
 
     if (newExtentNodePosition == null) {
       // Move to next node
@@ -345,9 +340,8 @@ class CommonEditorOperations {
     }
 
     if (!composer.selectionComponent.selection!.isCollapsed && !expand) {
-      composer.selectionComponent.updateSelection(
-          composer.selectionComponent.selection!.collapseDownstream(editor.document),
-          notifyListeners: true);
+      composer.selectionComponent
+          .updateSelection(composer.selectionComponent.selection!.collapseDownstream(editor.document), notifyListeners: true);
       return true;
     }
 
@@ -363,8 +357,7 @@ class CommonEditorOperations {
     }
 
     String newExtentNodeId = nodeId;
-    NodePosition? newExtentNodePosition =
-        extentComponent.movePositionRight(currentExtent.nodePosition, movementModifier);
+    NodePosition? newExtentNodePosition = extentComponent.movePositionRight(currentExtent.nodePosition, movementModifier);
 
     if (newExtentNodePosition == null) {
       // Move to next node
@@ -379,8 +372,7 @@ class CommonEditorOperations {
       newExtentNodeId = nextNode.id;
       final nextComponent = documentLayoutResolver().getComponentByNodeId(nextNode.id);
       if (nextComponent == null) {
-        throw Exception(
-            'Could not find next component to move the selection horizontally. Next node ID: ${nextNode.id}');
+        throw Exception('Could not find next component to move the selection horizontally. Next node ID: ${nextNode.id}');
       }
       newExtentNodePosition = nextComponent.getBeginningPosition();
     }
@@ -604,12 +596,10 @@ class CommonEditorOperations {
   }) {
     if (expandSelection) {
       // Selection should be expanded.
-      composer.selectionComponent
-          .updateSelection(composer.selectionComponent.selection!.expandTo(position), notifyListeners: true);
+      composer.selectionComponent.updateSelection(composer.selectionComponent.selection!.expandTo(position), notifyListeners: true);
     } else {
       // Selection should be replaced by new collapsed position.
-      composer.selectionComponent
-          .updateSelection(DocumentSelection.collapsed(position: position), notifyListeners: true);
+      composer.selectionComponent.updateSelection(DocumentSelection.collapsed(position: position), notifyListeners: true);
     }
   }
 
@@ -699,8 +689,7 @@ class CommonEditorOperations {
 
     if (composer.selectionComponent.selection!.extent.nodePosition is TextNodePosition) {
       final textPosition = composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition;
-      final text =
-          (editor.document.getNodeById(composer.selectionComponent.selection!.extent.nodeId) as TextNode).text.text;
+      final text = (editor.document.getNodeById(composer.selectionComponent.selection!.extent.nodeId) as TextNode).text.text;
       if (textPosition.offset == text.length) {
         final node = editor.document.getNodeById(composer.selectionComponent.selection!.extent.nodeId)!;
         final nodeAfter = editor.document.getNodeAfter(node);
@@ -865,8 +854,7 @@ class CommonEditorOperations {
     final node = editor.document.getNodeById(composer.selectionComponent.selection!.extent.nodeId)!;
 
     // If the caret is at the beginning of a list item, unindent the list item.
-    if (node is ListItemNode &&
-        (composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition).offset == 0) {
+    if (node is ListItemNode && (composer.selectionComponent.selection!.extent.nodePosition as TextNodePosition).offset == 0) {
       return unindentListItem();
     }
 
@@ -1053,8 +1041,7 @@ class CommonEditorOperations {
       ),
     );
 
-    composer.selectionComponent
-        .updateSelection(DocumentSelection.collapsed(position: newSelectionPosition), notifyListeners: true);
+    composer.selectionComponent.updateSelection(DocumentSelection.collapsed(position: newSelectionPosition), notifyListeners: true);
 
     return true;
   }
@@ -1100,8 +1087,7 @@ class CommonEditorOperations {
       DeleteSelectionRequest(documentSelection: composer.selectionComponent.selection!),
     );
 
-    composer.selectionComponent
-        .updateSelection(DocumentSelection.collapsed(position: newSelectionPosition), notifyListeners: true);
+    composer.selectionComponent.updateSelection(DocumentSelection.collapsed(position: newSelectionPosition), notifyListeners: true);
   }
 
   /// Returns the [DocumentPosition] where the caret should sit after deleting
@@ -1142,8 +1128,7 @@ class CommonEditorOperations {
 
     final bottomNodeIndex = max(baseNodeIndex, extentNodeIndex);
     final bottomNode = document.getNodeAt(bottomNodeIndex)!;
-    final bottomNodePosition =
-        baseNodeIndex < extentNodeIndex ? extentPosition.nodePosition : basePosition.nodePosition;
+    final bottomNodePosition = baseNodeIndex < extentNodeIndex ? extentPosition.nodePosition : basePosition.nodePosition;
 
     DocumentPosition newSelectionPosition;
 
@@ -1210,8 +1195,7 @@ class CommonEditorOperations {
           nodePosition: TextNodePosition(offset: min(baseOffset, extentOffset)),
         );
       } else {
-        throw Exception(
-            'Unknown selection position type: $basePosition, for node: $baseNode, within document selection: $selection');
+        throw Exception('Unknown selection position type: $basePosition, for node: $baseNode, within document selection: $selection');
       }
     }
 
@@ -1366,8 +1350,7 @@ class CommonEditorOperations {
 
     final extentNode = editor.document.getNodeById(composer.selectionComponent.selection!.extent.nodeId)!;
     if (extentNode is! TextNode) {
-      editorOpsLog
-          .fine("Couldn't insert text because Super Editor doesn't know how to handle a node of type: $extentNode");
+      editorOpsLog.fine("Couldn't insert text because Super Editor doesn't know how to handle a node of type: $extentNode");
       return false;
     }
 
@@ -1382,6 +1365,7 @@ class CommonEditorOperations {
         attributions: composer.preferences.currentAttributions,
       ),
     );
+    editorOpsLog.finer("Text after insertion: '${textNode.text.text}'");
 
     editorOpsLog.fine("Updating Document Composer selection after text insertion.");
     composer.selectionComponent.updateSelection(
@@ -1434,8 +1418,7 @@ class CommonEditorOperations {
 
     final extentNode = editor.document.getNodeById(composer.selectionComponent.selection!.extent.nodeId)!;
     if (extentNode is! TextNode) {
-      editorOpsLog.fine(
-          "Couldn't insert character because Super Editor doesn't know how to handle a node of type: $extentNode");
+      editorOpsLog.fine("Couldn't insert character because Super Editor doesn't know how to handle a node of type: $extentNode");
       return false;
     }
 
@@ -1573,8 +1556,7 @@ class CommonEditorOperations {
         ));
     final int linkCount = extractedLinks.fold(0, (value, element) => element is UrlElement ? value + 1 : value);
     editorOpsLog.fine("Found $linkCount link(s)");
-    final String nonEmptyText =
-        extractedLinks.fold('', (value, element) => element is TextElement ? value + element.text.trim() : value);
+    final String nonEmptyText = extractedLinks.fold('', (value, element) => element is TextElement ? value + element.text.trim() : value);
     if (linkCount == 1 && nonEmptyText.isEmpty) {
       // This node's text is just a URL, try to interpret it
       // as a known type.
@@ -1760,8 +1742,8 @@ class CommonEditorOperations {
     if (extentNode is ListItemNode) {
       if (extentNode.text.text.isEmpty) {
         // The list item is empty. Convert it to a paragraph.
-        editorOpsLog.finer(
-            "The current node is an empty list item. Converting it to a paragraph instead of inserting block-level newline.");
+        editorOpsLog
+            .finer("The current node is an empty list item. Converting it to a paragraph instead of inserting block-level newline.");
         return convertToParagraph();
       }
 
@@ -1790,8 +1772,7 @@ class CommonEditorOperations {
         ),
       );
     } else if (composer.selectionComponent.selection!.extent.nodePosition is UpstreamDownstreamNodePosition) {
-      final extentPosition =
-          composer.selectionComponent.selection!.extent.nodePosition as UpstreamDownstreamNodePosition;
+      final extentPosition = composer.selectionComponent.selection!.extent.nodePosition as UpstreamDownstreamNodePosition;
       if (extentPosition.affinity == TextAffinity.downstream) {
         // The caret sits on the downstream edge of block-level content. Insert
         // a new paragraph after this node.
@@ -2140,12 +2121,10 @@ class CommonEditorOperations {
 
       if (i == 0) {
         // This is the first node and it may be partially selected.
-        final baseSelectionPosition = selectedNode.id == documentSelection.base.nodeId
-            ? documentSelection.base.nodePosition
-            : documentSelection.extent.nodePosition;
+        final baseSelectionPosition =
+            selectedNode.id == documentSelection.base.nodeId ? documentSelection.base.nodePosition : documentSelection.extent.nodePosition;
 
-        final extentSelectionPosition =
-            selectedNodes.length > 1 ? selectedNode.endPosition : documentSelection.extent.nodePosition;
+        final extentSelectionPosition = selectedNodes.length > 1 ? selectedNode.endPosition : documentSelection.extent.nodePosition;
 
         nodeSelection = selectedNode.computeSelection(
           base: baseSelectionPosition,
@@ -2153,9 +2132,8 @@ class CommonEditorOperations {
         );
       } else if (i == selectedNodes.length - 1) {
         // This is the last node and it may be partially selected.
-        final nodePosition = selectedNode.id == documentSelection.base.nodeId
-            ? documentSelection.base.nodePosition
-            : documentSelection.extent.nodePosition;
+        final nodePosition =
+            selectedNode.id == documentSelection.base.nodeId ? documentSelection.base.nodePosition : documentSelection.extent.nodePosition;
 
         nodeSelection = selectedNode.computeSelection(
           base: selectedNode.beginningPosition,
@@ -2201,8 +2179,7 @@ class CommonEditorOperations {
         DeleteSelectionRequest(documentSelection: composer.selectionComponent.selection!),
       );
 
-      composer.selectionComponent
-          .updateSelection(DocumentSelection.collapsed(position: pastePosition), notifyListeners: true);
+      composer.selectionComponent.updateSelection(DocumentSelection.collapsed(position: pastePosition), notifyListeners: true);
     }
 
     // TODO: figure out a general approach for asynchronous behaviors that

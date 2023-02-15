@@ -169,6 +169,22 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
         }
       });
     }
+
+    // Use a post-frame callback to "ensure selection extent is visible"
+    // so that any pending visual document changes can happen before
+    // attempting to calculate the visual position of the selection extent.
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (!mounted) {
+        return;
+      }
+
+      editorGesturesLog.finer("Ensuring selection extent is visible because the doc selection changed");
+
+      final globalExtentRect = _getSelectionExtentAsGlobalRect();
+      if (globalExtentRect != null) {
+        widget.autoScroller.ensureGlobalRectIsVisible(globalExtentRect);
+      }
+    });
   }
 
   Rect? _getSelectionExtentAsGlobalRect() {
@@ -191,8 +207,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
     }
 
     final globalTopLeft = _docLayout.getGlobalOffsetFromDocumentOffset(selectionExtentRectInDoc.topLeft);
-    return Rect.fromLTWH(
-        globalTopLeft.dx, globalTopLeft.dy, selectionExtentRectInDoc.width, selectionExtentRectInDoc.height);
+    return Rect.fromLTWH(globalTopLeft.dx, globalTopLeft.dy, selectionExtentRectInDoc.width, selectionExtentRectInDoc.height);
   }
 
   void _onTapUp(TapUpDetails details) {
@@ -406,8 +421,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    editorGesturesLog
-        .info("Pan update on document, global offset: ${details.globalPosition}, device: $_panGestureDevice");
+    editorGesturesLog.info("Pan update on document, global offset: ${details.globalPosition}, device: $_panGestureDevice");
 
     if (_panGestureDevice == PointerDeviceKind.trackpad) {
       // The user dragged using two fingers on a trackpad.
@@ -486,8 +500,7 @@ class _DocumentMouseInteractorState extends State<DocumentMouseInteractor>
       return;
     }
 
-    final dragStartInDoc =
-        _getDocOffsetFromGlobalOffset(_dragStartGlobal!) + Offset(0, widget.autoScroller.deltaWhileAutoScrolling);
+    final dragStartInDoc = _getDocOffsetFromGlobalOffset(_dragStartGlobal!) + Offset(0, widget.autoScroller.deltaWhileAutoScrolling);
     final dragEndInDoc = _getDocOffsetFromGlobalOffset(_dragEndGlobal!);
     editorGesturesLog.finest(
       '''
@@ -541,9 +554,7 @@ Updating drag selection:
         widget.selectionComponent.updateSelection(null, notifyListeners: true);
         return;
       }
-      basePosition = baseOffsetInDocument.dy < extentOffsetInDocument.dy
-          ? baseParagraphSelection.base
-          : baseParagraphSelection.extent;
+      basePosition = baseOffsetInDocument.dy < extentOffsetInDocument.dy ? baseParagraphSelection.base : baseParagraphSelection.extent;
 
       final extentParagraphSelection = getParagraphSelection(
         docPosition: extentPosition,
@@ -553,9 +564,8 @@ Updating drag selection:
         widget.selectionComponent.updateSelection(null, notifyListeners: true);
         return;
       }
-      extentPosition = baseOffsetInDocument.dy < extentOffsetInDocument.dy
-          ? extentParagraphSelection.extent
-          : extentParagraphSelection.base;
+      extentPosition =
+          baseOffsetInDocument.dy < extentOffsetInDocument.dy ? extentParagraphSelection.extent : extentParagraphSelection.base;
     } else if (selectionType == SelectionType.word) {
       final baseWordSelection = getWordSelection(
         docPosition: basePosition,

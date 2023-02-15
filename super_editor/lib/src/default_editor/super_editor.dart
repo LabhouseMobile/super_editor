@@ -21,9 +21,8 @@ import 'attributions.dart';
 import 'blockquote.dart';
 import 'document_caret_overlay.dart';
 import 'document_gestures_mouse.dart';
-import 'document_input_ime.dart';
-import 'document_input_keyboard.dart';
-import 'document_keyboard_actions.dart';
+import 'document_hardware_keyboard/document_input_keyboard.dart';
+import 'document_ime/document_input_ime.dart';
 import 'horizontal_rule.dart';
 import 'image.dart';
 import 'layout_single_column/layout_single_column.dart';
@@ -73,65 +72,6 @@ import 'unknown_component.dart';
 /// Document composer is responsible for owning document selection and
 /// the current text entry mode.
 class SuperEditor extends StatefulWidget {
-  @Deprecated("Use unnamed SuperEditor() constructor instead")
-  SuperEditor.standard({
-    Key? key,
-    this.focusNode,
-    required this.editor,
-    this.composer,
-    this.scrollController,
-    this.documentLayoutKey,
-    Stylesheet? stylesheet,
-    this.customStylePhases = const [],
-    this.inputSource = DocumentInputSource.keyboard,
-    this.gestureMode = DocumentGestureMode.mouse,
-    this.androidHandleColor,
-    this.androidToolbarBuilder,
-    this.iOSHandleColor,
-    this.iOSToolbarBuilder,
-    this.createOverlayControlsClipper,
-    this.debugPaint = const DebugPaintConfig(),
-    this.autofocus = false,
-  })  : componentBuilders = defaultComponentBuilders,
-        keyboardActions = defaultKeyboardActions,
-        softwareKeyboardHandler = null,
-        stylesheet = stylesheet ?? defaultStylesheet,
-        selectionStyles = defaultSelectionStyle,
-        documentOverlayBuilders = [const DefaultCaretOverlayBuilder()],
-        super(key: key);
-
-  @Deprecated("Use unnamed SuperEditor() constructor instead")
-  SuperEditor.custom({
-    Key? key,
-    this.focusNode,
-    required this.editor,
-    this.composer,
-    this.scrollController,
-    this.documentLayoutKey,
-    Stylesheet? stylesheet,
-    this.customStylePhases = const [],
-    List<ComponentBuilder>? componentBuilders,
-    SelectionStyles? selectionStyle,
-    this.inputSource = DocumentInputSource.keyboard,
-    this.gestureMode = DocumentGestureMode.mouse,
-    List<DocumentKeyboardAction>? keyboardActions,
-    this.softwareKeyboardHandler,
-    this.androidHandleColor,
-    this.androidToolbarBuilder,
-    this.iOSHandleColor,
-    this.iOSToolbarBuilder,
-    this.createOverlayControlsClipper,
-    this.debugPaint = const DebugPaintConfig(),
-    this.autofocus = false,
-  })  : stylesheet = stylesheet ?? defaultStylesheet,
-        selectionStyles = selectionStyle ?? defaultSelectionStyle,
-        keyboardActions = keyboardActions ?? defaultKeyboardActions,
-        documentOverlayBuilders = [const DefaultCaretOverlayBuilder()],
-        componentBuilders = componentBuilders != null
-            ? [...componentBuilders, const UnknownComponentBuilder()]
-            : [...defaultComponentBuilders, const UnknownComponentBuilder()],
-        super(key: key);
-
   /// Creates a `Super Editor` with common (but configurable) defaults for
   /// visual components, text styles, and user interaction.
   SuperEditor({
@@ -146,9 +86,11 @@ class SuperEditor extends StatefulWidget {
     List<ComponentBuilder>? componentBuilders,
     SelectionStyles? selectionStyle,
     this.inputSource,
-    this.gestureMode,
+    this.softwareKeyboardController,
+    this.imePolicies = const SuperEditorImePolicies(),
+    this.imeConfiguration = const SuperEditorImeConfiguration(),
     List<DocumentKeyboardAction>? keyboardActions,
-    this.softwareKeyboardHandler,
+    this.gestureMode,
     this.androidHandleColor,
     this.androidToolbarBuilder,
     this.iOSHandleColor,
@@ -212,6 +154,22 @@ class SuperEditor extends StatefulWidget {
   /// The `SuperEditor` input source, e.g., keyboard or Input Method Engine.
   final DocumentInputSource? inputSource;
 
+  /// Opens and closes the software keyboard.
+  ///
+  /// Typically, this controller should only be used when the keyboard is configured
+  /// for manual control, e.g., [SuperEditorImePolicies.openKeyboardOnSelectionChange] and
+  /// [SuperEditorImePolicies.clearSelectionWhenImeDisconnects] are `false`. Otherwise,
+  /// the automatic behavior might conflict with commands to this controller.
+  final SoftwareKeyboardController? softwareKeyboardController;
+
+  /// Policies that dictate when and how [SuperEditor] should interact with the
+  /// platform IME, such as automatically opening the software keyboard when
+  /// [SuperEditor]'s selection changes.
+  final SuperEditorImePolicies imePolicies;
+
+  /// Preferences for how the platform IME should look and behave during editing.
+  final SuperEditorImeConfiguration imeConfiguration;
+
   /// The `SuperEditor` gesture mode, e.g., mouse or touch.
   final DocumentGestureMode? gestureMode;
 
@@ -260,11 +218,6 @@ class SuperEditor extends StatefulWidget {
   /// mode.
   final List<DocumentKeyboardAction> keyboardActions;
 
-  /// Applies all software keyboard edits to the document.
-  ///
-  /// This handler is only used when in [DocumentInputSource.ime] mode.
-  final SoftwareKeyboardHandler? softwareKeyboardHandler;
-
   /// Paints some extra visual ornamentation to help with
   /// debugging.
   final DebugPaintConfig debugPaint;
@@ -294,7 +247,7 @@ class SuperEditorState extends State<SuperEditor> {
 
   @visibleForTesting
   late EditContext editContext;
-  late SoftwareKeyboardHandler _softwareKeyboardHandler;
+
   final _floatingCursorController = FloatingCursorController();
 
   @visibleForTesting
@@ -315,13 +268,6 @@ class SuperEditorState extends State<SuperEditor> {
 
     _createEditContext();
     _createLayoutPresenter();
-
-    _softwareKeyboardHandler = widget.softwareKeyboardHandler ??
-        SoftwareKeyboardHandler(
-          editor: editContext.editor,
-          composer: editContext.composer,
-          commonOps: editContext.commonOps,
-        );
   }
 
   @override
@@ -333,25 +279,20 @@ class SuperEditorState extends State<SuperEditor> {
       _composer = widget.composer ?? DocumentComposer();
       _composer.addListener(_updateComposerPreferencesAtSelection);
     }
+
     if (widget.editor != oldWidget.editor) {
       // The content displayed in this Editor was switched
       // out. Remove any content selection from the previous
       // document.
       _composer.selectionComponent.updateSelection(null, notifyListeners: true);
     }
+
     if (widget.focusNode != oldWidget.focusNode) {
       _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
     }
+
     if (widget.documentLayoutKey != oldWidget.documentLayoutKey) {
       _docLayoutKey = widget.documentLayoutKey ?? GlobalKey();
-    }
-    if (widget.softwareKeyboardHandler != oldWidget.softwareKeyboardHandler) {
-      _softwareKeyboardHandler = widget.softwareKeyboardHandler ??
-          SoftwareKeyboardHandler(
-            editor: editContext.editor,
-            composer: editContext.composer,
-            commonOps: editContext.commonOps,
-          );
     }
 
     if (widget.editor != oldWidget.editor) {
@@ -434,8 +375,7 @@ class SuperEditorState extends State<SuperEditor> {
   }
 
   void _recomputeIfLayoutShouldShowCaret() {
-    _docLayoutSelectionStyler.shouldDocumentShowCaret =
-        _focusNode.hasFocus && _gestureMode == DocumentGestureMode.mouse;
+    _docLayoutSelectionStyler.shouldDocumentShowCaret = _focusNode.hasFocus && _gestureMode == DocumentGestureMode.mouse;
   }
 
   void _updateComposerPreferencesAtSelection() {
@@ -465,19 +405,15 @@ class SuperEditorState extends State<SuperEditor> {
       // Inserted text at the very beginning of a text blob assumes the
       // attributions immediately following it (except links).
       // TODO: attribution expansion policy should probably be configurable
-      final allStyles = node.text
-          .getAllAttributionsAt(textPosition.offset + 1)
-          .where((attribution) => attribution is! LinkAttribution)
-          .toSet();
+      final allStyles =
+          node.text.getAllAttributionsAt(textPosition.offset + 1).where((attribution) => attribution is! LinkAttribution).toSet();
       _composer.preferences.addStyles(allStyles);
     } else {
       // Inserted text assumes the attributions immediately preceding it
       // (except links).
       // TODO: attribution expansion policy should probably be configurable
-      final allStyles = node.text
-          .getAllAttributionsAt(textPosition.offset - 1)
-          .where((attribution) => attribution is! LinkAttribution)
-          .toSet();
+      final allStyles =
+          node.text.getAllAttributionsAt(textPosition.offset - 1).where((attribution) => attribution is! LinkAttribution).toSet();
       _composer.preferences.addStyles(allStyles);
     }
   }
@@ -534,7 +470,7 @@ class SuperEditorState extends State<SuperEditor> {
   }) {
     switch (_inputSource) {
       case DocumentInputSource.keyboard:
-        return DocumentKeyboardInteractor(
+        return SuperEditorHardwareKeyHandler(
           focusNode: _focusNode,
           autofocus: widget.autofocus,
           editContext: editContext,
@@ -542,11 +478,13 @@ class SuperEditorState extends State<SuperEditor> {
           child: child,
         );
       case DocumentInputSource.ime:
-        return DocumentImeInteractor(
+        return SuperEditorImeInteractor(
           focusNode: _focusNode,
           autofocus: widget.autofocus,
           editContext: editContext,
-          softwareKeyboardHandler: _softwareKeyboardHandler,
+          softwareKeyboardController: widget.softwareKeyboardController,
+          imePolicies: widget.imePolicies,
+          imeConfiguration: widget.imeConfiguration,
           hardwareKeyboardActions: widget.keyboardActions,
           floatingCursorController: _floatingCursorController,
           child: child,
