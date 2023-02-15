@@ -150,7 +150,7 @@ void main() {
         });
 
       // Display a SuperTextField.
-      await _pumpSuperTextField(tester, controller, inputSource: TextInputSource.ime);
+      await _pumpSuperTextField(tester, controller);
 
       // Place the caret in the text field to introduce a selection.
       await tester.placeCaretInSuperTextField(4);
@@ -403,11 +403,7 @@ void main() {
   });
 }
 
-Future<void> _pumpSuperTextField(
-  WidgetTester tester,
-  AttributedTextEditingController controller, {
-  TextInputSource? inputSource,
-}) async {
+Future<void> _pumpSuperTextField(WidgetTester tester, AttributedTextEditingController controller) async {
   await tester.pumpWidget(MaterialApp(
     home: Scaffold(
       body: Center(
@@ -415,7 +411,7 @@ Future<void> _pumpSuperTextField(
           width: 300,
           child: SuperTextField(
             textController: controller,
-            inputSource: inputSource,
+            // inputSource: inputSource,
           ),
         ),
       ),
