@@ -41,6 +41,7 @@ class TextDeltasDocumentEditor {
       } else if (delta is TextEditingDeltaDeletion) {
         _applyDeletion(delta, serializedDocBeforeDelta);
       } else if (delta is TextEditingDeltaNonTextUpdate) {
+        print('Applying TextEditingDeltaNonTextUpdate');
         _applyNonTextChange(delta);
       } else {
         editorImeLog.shout("Unknown IME delta type: ${delta.runtimeType}");
@@ -153,9 +154,9 @@ class TextDeltasDocumentEditor {
   }
 
   void _applyNonTextChange(TextEditingDeltaNonTextUpdate delta) {
-    editorImeLog.fine("Non-text change:");
-    editorImeLog.fine("OS-side selection - ${delta.selection}");
-    editorImeLog.fine("OS-side composing - ${delta.composing}");
+    print("Non-text change:");
+    print("OS-side selection - ${delta.selection}");
+    print("OS-side composing - ${delta.composing}");
 
     final docSelection = DocumentImeSerializer(
       editor.document,
@@ -163,6 +164,7 @@ class TextDeltasDocumentEditor {
       null,
     ).imeToDocumentSelection(delta.selection);
     if (docSelection != null) {
+      print('SSSS: ${docSelection.base.nodePosition}');
       // We got a selection from the platform.
       // This could happen in some software keyboards, like GBoard,
       // where the user can swipe over the spacebar to change the selection.
