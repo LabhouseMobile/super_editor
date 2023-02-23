@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart' hide ListenableBuilder;
 import 'package:flutter/services.dart';
-import 'package:super_editor/src/infrastructure/_listenable_builder.dart';
 import 'package:super_editor/src/infrastructure/attributed_text_styles.dart';
 import 'package:super_editor/src/infrastructure/focus.dart';
 import 'package:super_editor/src/infrastructure/ime_input_owner.dart';
@@ -492,9 +491,9 @@ class SuperAndroidTextFieldState extends State<SuperAndroidTextField>
             perLineAutoScrollDuration: const Duration(milliseconds: 100),
             showDebugPaint: widget.showDebugPaint,
             padding: widget.padding,
-            child: ListenableBuilder(
-              listenable: _textEditingController,
-              builder: (context) {
+            child: AnimatedBuilder(
+              animation: _textEditingController,
+              builder: (context, _) {
                 final isTextEmpty = _textEditingController.text.text.isEmpty;
                 final showHint = widget.hintBuilder != null &&
                     ((isTextEmpty && widget.hintBehavior == HintBehavior.displayHintUntilTextEntered) ||
