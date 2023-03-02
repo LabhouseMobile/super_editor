@@ -514,16 +514,113 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
     return selection;
   }
 
+  TextRange getWordRange(TextPosition position) => _renderParagraph.getWordBoundary(position);
+
+  TextRange? _getNextWord(int offset) {
+    while (true) {
+      final TextRange range = _renderParagraph.getWordBoundary(TextPosition(offset: offset));
+      if (!range.isValid || range.isCollapsed) {
+        return null;
+      }
+      if (!_onlyWhitespace(range)) {
+        return range;
+      }
+      offset = range.end;
+    }
+  }
+
+  TextRange? _getPreviousWord(int offset) {
+    while (offset >= 0) {
+      final TextRange range = _renderParagraph.getWordBoundary(TextPosition(offset: offset));
+      if (!range.isValid || range.isCollapsed) {
+        return null;
+      }
+      if (!_onlyWhitespace(range)) {
+        return range;
+      }
+      offset = range.start - 1;
+    }
+    return null;
+  }
+
+  bool _onlyWhitespace(TextRange range) {
+    for (int i = range.start; i < range.end; i++) {
+      final int codeUnit = _richText.codeUnitAt(i)!;
+      if (!TextLayoutMetrics.isWhitespace(codeUnit)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @override
   TextSelection getWordSelectionAt(TextPosition position) {
     if (_renderParagraph.needsLayout) {
       return const TextSelection.collapsed(offset: -1);
     }
 
-    final wordRange = _renderParagraph.getWordBoundary(position);
+    final word = getWordRange(position);
+
+    final int effectiveOffset;
+    switch (position.affinity) {
+      case TextAffinity.upstream:
+        // upstream affinity is effectively -1 in text position.
+        effectiveOffset = position.offset - 1;
+        break;
+      case TextAffinity.downstream:
+        effectiveOffset = position.offset;
+        break;
+    }
+    // On iOS, select the previous word if there is a previous word, or select
+    // to the end of the next word if there is a next word. Select nothing if
+    // there is neither a previous word nor a next word.
+    //
+    // If the platform is Android and the text is read only, try to select the
+    // previous word if there is one; otherwise, select the single whitespace at
+    // the position.
+    if (TextLayoutMetrics.isWhitespace(_richText.codeUnitAt(effectiveOffset)!) && effectiveOffset > 0) {
+      final TextRange? previousWord = _getPreviousWord(word.start);
+      switch (defaultTargetPlatform) {
+        case TargetPlatform.iOS:
+          if (previousWord == null) {
+            final TextRange? nextWord = _getNextWord(word.start);
+            if (nextWord == null) {
+              return TextSelection.collapsed(offset: position.offset);
+            }
+            return TextSelection(
+              baseOffset: position.offset,
+              extentOffset: nextWord.end,
+            );
+          }
+          return TextSelection(
+            baseOffset: previousWord.start,
+            extentOffset: position.offset,
+          );
+        case TargetPlatform.android:
+          if (true) {
+            if (previousWord == null) {
+              return TextSelection(
+                baseOffset: position.offset,
+                extentOffset: position.offset + 1,
+              );
+            }
+            return TextSelection(
+              baseOffset: previousWord.start,
+              extentOffset: position.offset,
+            );
+          }
+          break;
+        case TargetPlatform.fuchsia:
+        case TargetPlatform.macOS:
+        case TargetPlatform.linux:
+        case TargetPlatform.windows:
+          break;
+      }
+    }
+
     return TextSelection(
-      baseOffset: wordRange.start,
-      extentOffset: wordRange.end,
+      baseOffset: word.start,
+      extentOffset: word.end,
     );
   }
 }
