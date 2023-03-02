@@ -29,7 +29,10 @@ dependencies:
   linkify: ^4.0.0
   logging: ^1.0.1
   super_text_layout:
-    path: ../super_text_layout
+    git:
+      url: https://github.com/LabhouseMobile/super_editor.git
+      ref: software-keyboard-controller
+      path: super_text_layout
   uuid: ^3.0.3
 
   # Dependencies for testing tools that we ship with super_editor
