@@ -1149,6 +1149,21 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
               ..onCancel = _onPanCancel;
           },
         ),
+        // We use a HorizontalDragGestureRecognizer in addition to the VerticalDragGestureRecognizer
+        // to solve the bug of not selection more horizontal words due to the incompatibility
+        // of SuperEditor with other Scrollable
+        HorizontalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<HorizontalDragGestureRecognizer>(
+          () => HorizontalDragGestureRecognizer(),
+          (HorizontalDragGestureRecognizer instance) {
+            instance
+              ..dragStartBehavior = DragStartBehavior.down
+              ..onDown = _onPanDown
+              ..onStart = _onPanStart
+              ..onUpdate = _onPanUpdate
+              ..onEnd = _onPanEnd
+              ..onCancel = _onPanCancel;
+          },
+        ),
       },
       child: child,
     );
