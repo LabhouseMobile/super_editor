@@ -191,7 +191,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     // this.scrollPosition might be null.
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       final newScrollPosition = scrollPosition;
-      if (newScrollPosition != _activeScrollPosition) {
+      if (mounted && newScrollPosition != _activeScrollPosition) {
         setState(() {
           _activeScrollPosition?.removeListener(_onScrollChange);
           newScrollPosition.addListener(_onScrollChange);
@@ -406,8 +406,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   /// If this widget doesn't have an ancestor `Scrollable`, then this
   /// widget includes a `ScrollView` and this `State`'s render object
   /// is the viewport `RenderBox`.
-  RenderBox get viewportBox =>
-      (_findAncestorScrollable(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
+  RenderBox get viewportBox => (_findAncestorScrollable(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
 
   RenderBox get interactorBox => context.findRenderObject() as RenderBox;
 
@@ -744,8 +743,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   void _updateSelectionForNewDragHandleLocation() {
     final docDragDelta = _globalDragOffset! - _globalStartDragOffset!;
     final dragScrollDelta = _dragStartScrollOffset! - scrollPosition.pixels;
-    final docDragPosition = _docLayout
-        .getDocumentPositionNearestToOffset(_startDragPositionOffset! + docDragDelta - Offset(0, dragScrollDelta));
+    final docDragPosition =
+        _docLayout.getDocumentPositionNearestToOffset(_startDragPositionOffset! + docDragDelta - Offset(0, dragScrollDelta));
 
     if (docDragPosition == null) {
       return;

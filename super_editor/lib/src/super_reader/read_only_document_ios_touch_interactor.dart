@@ -137,7 +137,9 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
 
     widget.focusNode.addListener(_onFocusChange);
     if (widget.focusNode.hasFocus) {
-      _showEditingControlsOverlay();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showEditingControlsOverlay();
+      });
     }
 
     _scrollController = _scrollController = (widget.scrollController ?? ScrollController());
@@ -372,8 +374,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
   /// If this widget doesn't have an ancestor `Scrollable`, then this
   /// widget includes a `ScrollView` and this `State`'s render object
   /// is the viewport `RenderBox`.
-  RenderBox get viewportBox =>
-      (_findAncestorScrollable(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
+  RenderBox get viewportBox => (_findAncestorScrollable(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
 
   RenderBox get interactorBox => context.findRenderObject() as RenderBox;
 
@@ -636,8 +637,8 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
   void _updateSelectionForNewDragHandleLocation() {
     final docDragDelta = _globalDragOffset! - _globalStartDragOffset!;
     final dragScrollDelta = _dragStartScrollOffset! - scrollPosition.pixels;
-    final docDragPosition = _docLayout
-        .getDocumentPositionNearestToOffset(_startDragPositionOffset! + docDragDelta - Offset(0, dragScrollDelta));
+    final docDragPosition =
+        _docLayout.getDocumentPositionNearestToOffset(_startDragPositionOffset! + docDragDelta - Offset(0, dragScrollDelta));
 
     if (docDragPosition == null) {
       return;
@@ -804,8 +805,8 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
 
     final selection = widget.selection.value!;
     if (selection.isCollapsed) {
-      readerGesturesLog.warning(
-          "Tried to position toolbar for a collapsed selection in a read-only interactor. Collapsed selections shouldn't exist.");
+      readerGesturesLog
+          .warning("Tried to position toolbar for a collapsed selection in a read-only interactor. Collapsed selections shouldn't exist.");
       return;
     }
 
