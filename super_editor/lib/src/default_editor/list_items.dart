@@ -74,6 +74,17 @@ class ListItemNode extends TextNode {
   }
 
   @override
+  String copyContent(dynamic selection) {
+    assert(selection is TextSelection);
+
+    final buffer = StringBuffer();
+    buffer.write(' ' * indent * 4);
+    buffer.write('- ');
+    buffer.write(super.copyContent(selection));
+    return buffer.toString();
+  }
+
+  @override
   bool hasEquivalentContent(DocumentNode other) {
     return other is ListItemNode && type == other.type && indent == other.indent && text == other.text;
   }
