@@ -16,12 +16,12 @@ abstract class TextLayout {
   /// Returns the height of the character at the given [position].
   double getLineHeightAtPosition(TextPosition position);
 
-  /// Returns the estimated line height  
-  /// 
-  /// This is needed because if the text contains only emojis 
+  /// Returns the estimated line height
+  ///
+  /// This is needed because if the text contains only emojis
   /// we can't get a [TextBox] from flutter to determine
   /// the line height
-  /// 
+  ///
   /// WARNING: This method should be called only when absolutely necessary
   /// and may be removed in the future
   double get estimatedLineHeight;
@@ -51,10 +51,10 @@ abstract class TextLayout {
   /// Returns a [List] of [TextBox]es that contain the given [selection].
   List<TextBox> getBoxesForSelection(TextSelection selection);
 
-  /// Returns a bounding [TextBox] for the character at the given [position] or `null` 
+  /// Returns a bounding [TextBox] for the character at the given [position] or `null`
   /// if a character box couldn't be found.
-  /// 
-  /// The only situation where this could return null is when the text 
+  ///
+  /// The only situation where this could return null is when the text
   /// contains only emojis
   TextBox? getCharacterBox(TextPosition position);
 
@@ -257,8 +257,8 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
     final characterBox = getCharacterBox(position);
     if (characterBox == null) {
       return estimatedLineHeight;
-    }    
-    return characterBox.toRect().height * lineHeightMultiplier;    
+    }
+    return characterBox.toRect().height * lineHeightMultiplier;
   }
 
   @override
@@ -367,8 +367,7 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
     // TODO: use the character box instead of the estimated line height
     // Note: add half the line height to the current offset to help deal with
     //       line heights that aren't accurate.
-    final positionOffset =
-        renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) + Offset(0, estimatedLineHeight / 2);
+    final positionOffset = renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) + Offset(0, estimatedLineHeight / 2);
     final endOfLineOffset = Offset(0, positionOffset.dy);
     return renderParagraph.getPositionForOffset(endOfLineOffset);
   }
@@ -383,8 +382,7 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
     // TODO: use the character box instead of the estimated line height
     // Note: add half the line height to the current offset to help deal with
     //       line heights that aren't accurate.
-    final positionOffset =
-        renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) + Offset(0, estimatedLineHeight / 2);
+    final positionOffset = renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) + Offset(0, estimatedLineHeight / 2);
     final endOfLineOffset = Offset(renderParagraph.size.width, positionOffset.dy);
     return renderParagraph.getPositionForOffset(endOfLineOffset);
   }
@@ -400,8 +398,7 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
     final lineHeight = estimatedLineHeight;
     // Note: add half the line height to the current offset to help deal with
     //       line heights that aren't accurate.
-    final currentSelectionOffset =
-        renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) + Offset(0, lineHeight / 2);
+    final currentSelectionOffset = renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) + Offset(0, lineHeight / 2);
     final oneLineUpOffset = currentSelectionOffset - Offset(0, lineHeight);
 
     if (oneLineUpOffset.dy < 0) {
@@ -423,8 +420,7 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
     final lineHeight = estimatedLineHeight;
     // Note: add half the line height to the current offset to help deal with
     //       line heights that aren't accurate.
-    final currentSelectionOffset =
-        renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) + Offset(0, lineHeight / 2);
+    final currentSelectionOffset = renderParagraph.getOffsetForCaret(currentPosition, Rect.zero) + Offset(0, lineHeight / 2);
     final oneLineDownOffset = currentSelectionOffset + Offset(0, lineHeight);
 
     if (oneLineDownOffset.dy > renderParagraph.size.height) {
@@ -580,7 +576,8 @@ class RenderParagraphProseTextLayout implements ProseTextLayout {
     // If the platform is Android and the text is read only, try to select the
     // previous word if there is one; otherwise, select the single whitespace at
     // the position.
-    if (TextLayoutMetrics.isWhitespace(_richText.codeUnitAt(effectiveOffset)!) && effectiveOffset > 0) {
+    final codeUnit = _richText.codeUnitAt(effectiveOffset);
+    if (codeUnit != null && TextLayoutMetrics.isWhitespace(codeUnit) && effectiveOffset > 0) {
       final TextRange? previousWord = _getPreviousWord(word.start);
       switch (defaultTargetPlatform) {
         case TargetPlatform.iOS:
