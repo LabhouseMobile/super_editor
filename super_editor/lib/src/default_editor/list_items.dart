@@ -77,9 +77,15 @@ class ListItemNode extends TextNode {
   String copyContent(dynamic selection) {
     assert(selection is TextSelection);
 
+    final index = metadata['index'] as int?;
+
     final buffer = StringBuffer();
     buffer.write(' ' * indent * 4);
-    buffer.write('- ');
+    if (type == ListItemType.ordered) {
+      buffer.write('$index. ');
+    } else {
+      buffer.write('- ');
+    }
     buffer.write(super.copyContent(selection));
     return buffer.toString();
   }
@@ -92,11 +98,7 @@ class ListItemNode extends TextNode {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      super == other &&
-          other is ListItemNode &&
-          runtimeType == other.runtimeType &&
-          type == other.type &&
-          _indent == other._indent;
+      super == other && other is ListItemNode && runtimeType == other.runtimeType && type == other.type && _indent == other._indent;
 
   @override
   int get hashCode => super.hashCode ^ type.hashCode ^ _indent.hashCode;
@@ -120,10 +122,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
     if (node.type == ListItemType.ordered) {
       ordinalValue = 1;
       DocumentNode? nodeAbove = document.getNodeBefore(node);
-      while (nodeAbove != null &&
-          nodeAbove is ListItemNode &&
-          nodeAbove.type == ListItemType.ordered &&
-          nodeAbove.indent >= node.indent) {
+      while (nodeAbove != null && nodeAbove is ListItemNode && nodeAbove.type == ListItemType.ordered && nodeAbove.indent >= node.indent) {
         if (nodeAbove.indent == node.indent) {
           ordinalValue = ordinalValue! + 1;
         }
@@ -142,8 +141,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
   }
 
   @override
-  Widget? createComponent(
-      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+  Widget? createComponent(SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
     if (componentViewModel is! ListItemComponentViewModel) {
       return null;
     }
@@ -171,8 +169,7 @@ class ListItemComponentBuilder implements ComponentBuilder {
       );
     }
 
-    editorLayoutLog
-        .warning("Tried to build a component for a list item view model without a list item type: $componentViewModel");
+    editorLayoutLog.warning("Tried to build a component for a list item view model without a list item type: $componentViewModel");
     return null;
   }
 }
@@ -245,8 +242,7 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
           isTextViewModelEquivalent(other);
 
   @override
-  int get hashCode =>
-      super.hashCode ^ nodeId.hashCode ^ type.hashCode ^ ordinalValue.hashCode ^ indent.hashCode ^ textHashCode;
+  int get hashCode => super.hashCode ^ nodeId.hashCode ^ type.hashCode ^ ordinalValue.hashCode ^ indent.hashCode ^ textHashCode;
 }
 
 /// Displays a un-ordered list item in a document.
@@ -721,8 +717,7 @@ ExecutionInstruction backspaceToUnIndentListItem({
     return ExecutionInstruction.continueExecution;
   }
 
-  final node =
-      editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
+  final node = editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
   if (node is! ListItemNode) {
     return ExecutionInstruction.continueExecution;
   }
@@ -743,8 +738,7 @@ ExecutionInstruction splitListItemWhenEnterPressed({
     return ExecutionInstruction.continueExecution;
   }
 
-  final node =
-      editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
+  final node = editContext.editor.document.getNodeById(editContext.composer.selectionComponent.selection!.extent.nodeId);
   if (node is! ListItemNode) {
     return ExecutionInstruction.continueExecution;
   }
