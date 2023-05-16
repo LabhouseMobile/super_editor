@@ -9,7 +9,6 @@ import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart' hide SelectionType;
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:super_editor/src/infrastructure/blinking_caret.dart';
-import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/android_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
@@ -431,7 +430,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     );
   }
 
-  void _onTapUp(TapUpDetails details) {
+  void _onTapUp(TapDownDetails details) {
     editorGesturesLog.info("Tap down on document");
     final docOffset = _getDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
@@ -937,18 +936,23 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   }) {
     return RawGestureDetector(
       behavior: HitTestBehavior.translucent,
-      gestures: <Type, GestureRecognizerFactory>{
-        TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
-          () => TapSequenceGestureRecognizer(),
-          (TapSequenceGestureRecognizer recognizer) {
-            recognizer
-              ..onTapUp = _onTapUp
-              ..onDoubleTapDown = _onDoubleTapDown
-              ..onTripleTapDown = _onTripleTapDown;
-          },
-        ),
+      gestures: const <Type, GestureRecognizerFactory>{
+        // TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
+        //   () => TapSequenceGestureRecognizer(),
+        //   (TapSequenceGestureRecognizer recognizer) {
+        //     recognizer
+        //       ..onTapUp = _onTapUp
+        //       ..onDoubleTapDown = _onDoubleTapDown
+        //       ..onTripleTapDown = _onTripleTapDown;
+        //   },
+        // ),
       },
-      child: child,
+      child: TextSelectionGestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTapDown: _onTapUp,
+        onDoubleTapDown: _onDoubleTapDown,
+        child: child,
+      ),
     );
   }
 }

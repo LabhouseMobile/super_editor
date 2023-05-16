@@ -9,7 +9,6 @@ import 'package:super_editor/src/default_editor/document_selection_on_focus_mixi
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 
@@ -438,7 +437,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     );
   }
 
-  void _onTapUp(TapUpDetails details) {
+  void _onTapUp(TapDownDetails details) {
     final selection = widget.selection.value;
     if (selection != null &&
         !selection.isCollapsed &&
@@ -508,7 +507,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     widget.focusNode.requestFocus();
   }
 
-  void _onDoubleTapUp(TapUpDetails details) {
+  void _onDoubleTapUp(TapDownDetails details) {
     final selection = widget.selection.value;
     if (selection != null &&
         !selection.isCollapsed &&
@@ -1123,16 +1122,16 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     return RawGestureDetector(
       behavior: HitTestBehavior.opaque,
       gestures: <Type, GestureRecognizerFactory>{
-        TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
-          () => TapSequenceGestureRecognizer(),
-          (TapSequenceGestureRecognizer recognizer) {
-            recognizer
-              ..onTapUp = _onTapUp
-              ..onDoubleTapUp = _onDoubleTapUp
-              ..onTripleTapUp = _onTripleTapUp
-              ..onTimeout = _onTapTimeout;
-          },
-        ),
+        // TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
+        //   () => TapSequenceGestureRecognizer(),
+        //   (TapSequenceGestureRecognizer recognizer) {
+        //     recognizer
+        //       ..onTapUp = _onTapUp
+        //       ..onDoubleTapUp = _onDoubleTapUp
+        //       ..onTripleTapUp = _onTripleTapUp
+        //       ..onTimeout = _onTapTimeout;
+        //   },
+        // ),
         // We use a VerticalDragGestureRecognizer instead of a PanGestureRecognizer
         // because `Scrollable` also uses a VerticalDragGestureRecognizer and we
         // need to beat out any ancestor `Scrollable` in the gesture arena.
@@ -1164,7 +1163,12 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
           },
         ),
       },
-      child: child,
+      child: TextSelectionGestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTapDown: _onTapUp,
+        onDoubleTapDown: _onDoubleTapUp,
+        child: child,
+      ),
     );
   }
 }
