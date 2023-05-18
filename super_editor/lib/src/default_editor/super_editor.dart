@@ -1,4 +1,5 @@
 import 'package:attributed_text/attributed_text.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart' hide SelectableText;
 import 'package:super_editor/src/core/document.dart';
@@ -260,7 +261,7 @@ class SuperEditorState extends State<SuperEditor> {
     _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChange);
 
     _composer = widget.composer ?? DocumentComposer();
-    _composer.addListener(_updateComposerPreferencesAtSelection);
+    _composer.selectionComponent.selectionNotifier.addListener(_updateComposerPreferencesAtSelection);
 
     _autoScrollController = AutoScrollController();
 
@@ -274,10 +275,10 @@ class SuperEditorState extends State<SuperEditor> {
   void didUpdateWidget(SuperEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.composer != oldWidget.composer) {
-      _composer.removeListener(_updateComposerPreferencesAtSelection);
+      _composer.selectionComponent.selectionNotifier.removeListener(_updateComposerPreferencesAtSelection);
 
       _composer = widget.composer ?? DocumentComposer();
-      _composer.addListener(_updateComposerPreferencesAtSelection);
+      _composer.selectionComponent.selectionNotifier.addListener(_updateComposerPreferencesAtSelection);
     }
 
     if (widget.editor != oldWidget.editor) {
@@ -379,43 +380,78 @@ class SuperEditorState extends State<SuperEditor> {
   }
 
   void _updateComposerPreferencesAtSelection() {
-    if (_composer.selectionComponent.selection?.extent == _previousSelectionExtent) {
+    final selection = _composer.selectionComponent.selection;
+    if (selection?.extent == _previousSelectionExtent) {
       return;
     }
-    _previousSelectionExtent = _composer.selectionComponent.selection?.extent;
+
+    final selectionExtent = selection?.extent;
+    if (selectionExtent != null &&
+        selectionExtent.nodePosition is TextNodePosition &&
+        _previousSelectionExtent != null &&
+        _previousSelectionExtent!.nodePosition is TextNodePosition) {
+      // The current and previous selections are text positions. Check for the situation where the two
+      // selections are functionally equivalent, but the affinity changed.
+      final selectedNodePosition = selectionExtent.nodePosition as TextNodePosition;
+      final previousSelectedNodePosition = _previousSelectionExtent!.nodePosition as TextNodePosition;
+
+      if (selectionExtent.nodeId == _previousSelectionExtent!.nodeId &&
+          selectedNodePosition.offset == previousSelectedNodePosition.offset) {
+        // The text selection changed, but only the affinity is different. An affinity change doesn't alter
+        // the selection from the user's perspective, so don't alter any preferences. Return.
+        return;
+      }
+    }
+
+    _previousSelectionExtent = selection?.extent;
 
     _composer.preferences.clearStyles();
 
-    if (_composer.selectionComponent.selection == null || !_composer.selectionComponent.selection!.isCollapsed) {
+    if (selection == null || !selection.isCollapsed) {
       return;
     }
 
-    final node = widget.editor.document.getNodeById(_composer.selectionComponent.selection!.extent.nodeId);
+    final node = widget.editor.document.getNodeById(selection.extent.nodeId);
     if (node is! TextNode) {
       return;
     }
 
-    final textPosition = _composer.selectionComponent.selection!.extent.nodePosition as TextPosition;
+    final textPosition = selection.extent.nodePosition as TextPosition;
 
-    if (textPosition.offset == 0) {
-      if (node.text.text.isEmpty) {
-        return;
-      }
-
-      // Inserted text at the very beginning of a text blob assumes the
-      // attributions immediately following it (except links).
-      // TODO: attribution expansion policy should probably be configurable
-      final allStyles =
-          node.text.getAllAttributionsAt(textPosition.offset + 1).where((attribution) => attribution is! LinkAttribution).toSet();
-      _composer.preferences.addStyles(allStyles);
-    } else {
-      // Inserted text assumes the attributions immediately preceding it
-      // (except links).
-      // TODO: attribution expansion policy should probably be configurable
-      final allStyles =
-          node.text.getAllAttributionsAt(textPosition.offset - 1).where((attribution) => attribution is! LinkAttribution).toSet();
-      _composer.preferences.addStyles(allStyles);
+    if (textPosition.offset == 0 && node.text.text.isEmpty) {
+      return;
     }
+
+    late int currentAttributionsOffset;
+    if (textPosition.offset == 0) {
+      // The inserted text is at the very beginning of the text blob. Therefore, we should apply the
+      // same attributions to the inserted text, as the text that immediately follows the inserted text.
+      currentAttributionsOffset = textPosition.offset + 1;
+    } else {
+      // The inserted text is NOT at the very beginning of the text blob. Therefore, we should apply the
+      // same attributions to the inserted text, as the text that immediately precedes the inserted text.
+      currentAttributionsOffset = textPosition.offset - 1;
+    }
+
+    Set<Attribution> allAttributions = node.text.getAllAttributionsAt(currentAttributionsOffset);
+
+    // TODO: attribution expansion policy should probably be configurable
+
+    // Add non-link attributions.
+    final newStyles = allAttributions.where((attribution) => attribution is! LinkAttribution).toSet();
+
+    // Add a link attribution only if the selection sits at the middle of the link.
+    // As we are dealing with a collapsed selection, we shouldn't have more than one link.
+    final linkAttribution = allAttributions.firstWhereOrNull((attribution) => attribution is LinkAttribution);
+    if (linkAttribution != null) {
+      final range = node.text.getAttributedRange({linkAttribution}, currentAttributionsOffset);
+
+      if (textPosition.offset > 0 && currentAttributionsOffset >= range.start && currentAttributionsOffset < range.end) {
+        newStyles.add(linkAttribution);
+      }
+    }
+
+    _composer.preferences.addStyles(newStyles);
   }
 
   DocumentGestureMode get _gestureMode {
