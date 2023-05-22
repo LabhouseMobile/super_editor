@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/default_editor/document_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
@@ -32,6 +33,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
     required this.popoverToolbarBuilder,
     required this.floatingCursorController,
     this.createOverlayControlsClipper,
+    this.contentTapHandler,
     this.showDebugPaint = false,
     required this.child,
   }) : super(key: key);
@@ -42,6 +44,10 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
   final GlobalKey documentKey;
   final DocumentLayout Function() getDocumentLayout;
   final ValueNotifier<DocumentSelection?> selection;
+
+  /// Optional handler that responds to taps on content, e.g., opening
+  /// a link when the user taps on text with a link attribution.
+  final ContentTapDelegate? contentTapHandler;
 
   final ScrollController? scrollController;
 
@@ -84,6 +90,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   // The alternative case is the one in which this interactor defers to an
   // ancestor scrollable.
   late ScrollController _scrollController;
+  final bool _isScrolling = false;
+
   // The ScrollPosition attached to the _ancestorScrollable.
   ScrollPosition? _ancestorScrollPosition;
   // The actual ScrollPosition that's used for the document layout, either
@@ -437,7 +445,75 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     );
   }
 
-  void _onTapUp(TapDownDetails details) {
+  static int _getEffectiveConsecutiveTapCount(int rawCount) {
+    switch (TargetPlatform.iOS) {
+      case TargetPlatform.android:
+      case TargetPlatform.fuchsia:
+      case TargetPlatform.linux:
+        // From observation, these platform's reset their tap count to 0 when
+        // the number of consecutive taps exceeds 3. For example on Debian Linux
+        // with GTK, when going past a triple click, on the fourth click the
+        // selection is moved to the precise click position, on the fifth click
+        // the word at the position is selected, and on the sixth click the
+        // paragraph at the position is selected.
+        return rawCount <= 3 ? rawCount : (rawCount % 3 == 0 ? 3 : rawCount % 3);
+      case TargetPlatform.iOS:
+      case TargetPlatform.macOS:
+        // From observation, these platform's either hold their tap count at 3.
+        // For example on macOS, when going past a triple click, the selection
+        // should be retained at the paragraph that was first selected on triple
+        // click.
+        return min(rawCount, 3);
+      case TargetPlatform.windows:
+        // From observation, this platform's consecutive tap actions alternate
+        // between double click and triple click actions. For example, after a
+        // triple click has selected a paragraph, on the next click the word at
+        // the clicked position will be selected, and on the next click the
+        // paragraph at the position is selected.
+        return rawCount < 2 ? rawCount : 2 + rawCount % 2;
+    }
+  }
+
+  bool _wasScrollingOnTapDown = false;
+  void _onTapDown(TapDragDownDetails details) {
+    if (_getEffectiveConsecutiveTapCount(details.consecutiveTapCount) != 1) {
+      return;
+    }
+    // When the user scrolls and releases, the scrolling continues with momentum.
+    // If the user then taps down again, the momentum stops. When this happens, we
+    // still receive tap callbacks. But we don't want to take any further action,
+    // like moving the caret, when the user taps to stop scroll momentum. We have
+    // to carefully watch the scrolling activity to recognize when this happens.
+    // We can't check whether we're scrolling in "on tap up" because by then the
+    // scrolling has already stopped. So we log whether we're scrolling "on tap down"
+    // and then check this flag in "on tap up".
+    _wasScrollingOnTapDown = _isScrolling;
+
+    if (_isScrolling) {
+      // On iOS, unlike Android, tapping while scrolling doesn't seem to stop the scrolling
+      // momentum. If we're actively scrolling, stop the momentum.
+      (scrollPosition as ScrollPositionWithSingleContext).goIdle();
+      return;
+    }
+  }
+
+  void _onTapUp(TapDragUpDetails details) {
+    if (_wasScrollingOnTapDown) {
+      // The scrollable was scrolling when the user touched down. We expect that the
+      // touch down stopped the scrolling momentum. We don't want to take any further
+      // action on this touch event. The user will tap again to change the selection.
+      return;
+    }
+
+    var tapCount = _getEffectiveConsecutiveTapCount(details.consecutiveTapCount);
+    if (tapCount == 2) {
+      _onDoubleTapUp(details);
+    }
+
+    if (tapCount == 3) {
+      _onTripleTapUp(details);
+    }
+
     final selection = widget.selection.value;
     if (selection != null &&
         !selection.isCollapsed &&
@@ -452,6 +528,15 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
+
+    if (widget.contentTapHandler != null && docPosition != null) {
+      final result = widget.contentTapHandler!.onTap(docPosition);
+      if (result == TapHandlingInstruction.halt) {
+        // The custom tap handler doesn't want us to react at all
+        // to the tap.
+        return;
+      }
+    }
 
     if (docPosition != null &&
         selection != null &&
@@ -507,7 +592,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     widget.focusNode.requestFocus();
   }
 
-  void _onDoubleTapUp(TapDownDetails details) {
+  void _onDoubleTapUp(TapDragUpDetails details) {
     final selection = widget.selection.value;
     if (selection != null &&
         !selection.isCollapsed &&
@@ -520,6 +605,15 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
+
+    if (docPosition != null && widget.contentTapHandler != null) {
+      final result = widget.contentTapHandler!.onDoubleTap(docPosition);
+      if (result == TapHandlingInstruction.halt) {
+        // The custom tap handler doesn't want us to react at all
+        // to the tap.
+        return;
+      }
+    }
 
     if (docPosition != null) {
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
@@ -575,13 +669,22 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     return true;
   }
 
-  void _onTripleTapUp(TapUpDetails details) {
+  void _onTripleTapUp(TapDragUpDetails details) {
     editorGesturesLog.info("Triple down down on document");
 
     final docOffset = _interactorOffsetToDocOffset(details.localPosition);
     editorGesturesLog.fine(" - document offset: $docOffset");
     final docPosition = _docLayout.getDocumentPositionNearestToOffset(docOffset);
     editorGesturesLog.fine(" - tapped document position: $docPosition");
+
+    if (docPosition != null && widget.contentTapHandler != null) {
+      final result = widget.contentTapHandler!.onTripleTap(docPosition);
+      if (result == TapHandlingInstruction.halt) {
+        // The custom tap handler doesn't want us to react at all
+        // to the tap.
+        return;
+      }
+    }
 
     if (docPosition != null) {
       final tappedComponent = _docLayout.getComponentByNodeId(docPosition.nodeId)!;
@@ -1119,9 +1222,20 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   Widget _buildGestureInput({
     required Widget child,
   }) {
+    final gestureSettings = MediaQuery.maybeOf(context)?.gestureSettings;
     return RawGestureDetector(
       behavior: HitTestBehavior.opaque,
       gestures: <Type, GestureRecognizerFactory>{
+        TapAndPanGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapAndPanGestureRecognizer>(
+          () => TapAndPanGestureRecognizer(),
+          (TapAndPanGestureRecognizer recognizer) {
+            recognizer
+              ..onTapDown = _onTapDown
+              ..onTapUp = _onTapUp
+              ..onCancel = _onTapTimeout
+              ..gestureSettings = gestureSettings;
+          },
+        ),
         // TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
         //   () => TapSequenceGestureRecognizer(),
         //   (TapSequenceGestureRecognizer recognizer) {
@@ -1163,12 +1277,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
           },
         ),
       },
-      child: TextSelectionGestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTapDown: _onTapUp,
-        onDoubleTapDown: _onDoubleTapUp,
-        child: child,
-      ),
+      child: child,
     );
   }
 }
