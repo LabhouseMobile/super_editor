@@ -362,7 +362,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   void _onSelectionChange() {
-    print('Notifier: ${widget.selection.value}');
     // The selection change might correspond to new content that's not
     // laid out yet. Wait until the next frame to update visuals.
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
