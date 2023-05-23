@@ -4,7 +4,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/default_editor/document_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
-import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/metrics.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -346,9 +345,12 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   void _onDocumentChange(DocumentChangeLog changeLog) {
-    _editingController.hideToolbar();
+    if (changeLog.changes.any((element) => element is! SelectionChangeEvent)) {
+      _editingController.hideToolbar();
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (!mounted) return;
       // The user may have changed the type of node, e.g., paragraph to
       // blockquote, which impacts the caret size and position. Reposition
       // the caret on the next frame.
@@ -360,9 +362,9 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   void _onSelectionChange() {
+    print('Notifier: ${widget.selection.value}');
     // The selection change might correspond to new content that's not
     // laid out yet. Wait until the next frame to update visuals.
-    WidgetsBinding.instance.scheduleFrame();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (!mounted) {
         return;
@@ -515,10 +517,12 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     var tapCount = _getEffectiveConsecutiveTapCount(details.consecutiveTapCount);
     if (tapCount == 2) {
       _onDoubleTapUp(details);
+      return;
     }
 
     if (tapCount == 3) {
       _onTripleTapUp(details);
+      return;
     }
 
     final selection = widget.selection.value;
