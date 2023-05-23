@@ -554,6 +554,7 @@ class SuperEditorState extends State<SuperEditor> {
       case DocumentGestureMode.iOS:
         return IOSDocumentTouchInteractor(
           focusNode: _focusNode,
+          editor: editContext.editor,
           document: editContext.editor.document,
           getDocumentLayout: () => editContext.documentLayout,
           selection: editContext.composer.selectionComponent.selectionNotifier,

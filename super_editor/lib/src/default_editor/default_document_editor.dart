@@ -49,8 +49,14 @@ final defaultRequestHandlers = [
   (request) => request is ReplaceNodeWithEmptyParagraphWithCaretRequest
       ? ReplaceNodeWithEmptyParagraphWithCaretCommand(nodeId: request.nodeId)
       : null,
-  (request) =>
-      request is DeleteSelectionRequest ? DeleteSelectionCommand(documentSelection: request.documentSelection) : null,
+  (request) => request is DeleteSelectionRequest ? DeleteSelectionCommand(documentSelection: request.documentSelection) : null,
+  (request) => request is ChangeSelectionRequest
+      ? ChangeSelectionCommand(
+          request.newSelection,
+          request.reason,
+          newComposingRegion: request.newComposingRegion,
+        )
+      : null,
   (request) => request is DeleteNodeRequest ? DeleteNodeCommand(nodeId: request.nodeId) : null,
   (request) => request is InsertTextRequest
       ? InsertTextCommand(

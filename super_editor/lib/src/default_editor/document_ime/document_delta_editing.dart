@@ -168,7 +168,7 @@ class TextDeltasDocumentEditor {
       // We got a selection from the platform.
       // This could happen in some software keyboards, like GBoard,
       // where the user can swipe over the spacebar to change the selection.
-      selection.value = docSelection;
+      editor.execute(ChangeSelectionRequest(docSelection, 'userInteraction'));
     }
   }
 
@@ -176,7 +176,7 @@ class TextDeltasDocumentEditor {
     editorImeLog.fine('Inserting "$textInserted" at position "$insertionSelection"');
     editorImeLog.fine("Updating the Document Composer's selection to place caret at insertion offset:\n$insertionSelection");
     final selectionBeforeInsertion = selection.value;
-    selection.value = insertionSelection;
+    editor.execute(ChangeSelectionRequest(insertionSelection, 'userInteraction'));
 
     editorImeLog.fine("Inserting the text at the Document Composer's selection");
     final didInsert = commonOps.insertPlainText(textInserted);
@@ -184,7 +184,7 @@ class TextDeltasDocumentEditor {
 
     if (!didInsert) {
       editorImeLog.fine("Failed to insert characters. Restoring previous selection.");
-      selection.value = selectionBeforeInsertion;
+      editor.execute(ChangeSelectionRequest(selectionBeforeInsertion, 'userInteraction'));
     }
 
     commonOps.convertParagraphByPatternMatching(
@@ -202,7 +202,7 @@ class TextDeltasDocumentEditor {
     ));
 
     if (replacementSelection != null) {
-      selection.value = replacementSelection;
+      editor.execute(ChangeSelectionRequest(replacementSelection, 'userInteraction'));
     }
     editorImeLog.fine("Replacing selection: $replacementSelection");
     editorImeLog.fine('With text: "$replacementText"');
@@ -244,7 +244,7 @@ class TextDeltasDocumentEditor {
     }
 
     editorImeLog.fine("Running selection deletion operation");
-    selection.value = docSelectionToDelete;
+    editor.execute(ChangeSelectionRequest(docSelectionToDelete, 'changeContent'));
     commonOps.deleteSelection();
   }
 

@@ -1,6 +1,7 @@
 import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:super_editor/src/core/document.dart';
+import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 
 import 'document_selection.dart';
@@ -106,5 +107,66 @@ class ComposerPreferences with ChangeNotifier {
   void clearStyles() {
     _currentAttributions.clear();
     notifyListeners();
+  }
+}
+
+/// [EditRequest] that changes the [DocumentSelection] to the given [newSelection].
+class ChangeSelectionRequest implements EditorRequest {
+  const ChangeSelectionRequest(
+    this.newSelection,
+    this.reason, {
+    this.newComposingRegion,
+    this.notifyListeners = true,
+  });
+
+  final DocumentSelection? newSelection;
+  final DocumentRange? newComposingRegion;
+
+  /// Whether to notify [DocumentComposer] listeners when the selection is changed.
+  // TODO: configure the composer so it plugs into the editor in way that this is unnecessary.
+  final bool notifyListeners;
+
+  /// The reason that the selection changed, such as "user interaction".
+  final String reason;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ChangeSelectionRequest &&
+          runtimeType == other.runtimeType &&
+          newSelection == other.newSelection &&
+          newComposingRegion == other.newComposingRegion &&
+          notifyListeners == other.notifyListeners &&
+          reason == other.reason;
+
+  @override
+  int get hashCode => newSelection.hashCode ^ newComposingRegion.hashCode ^ notifyListeners.hashCode ^ reason.hashCode;
+}
+
+/// An [EditCommand] that changes the [DocumentSelection] in the [DocumentComposer]
+/// to the [newSelection].
+class ChangeSelectionCommand implements EditorCommand {
+  const ChangeSelectionCommand(
+    this.newSelection,
+    this.reason, {
+    this.newComposingRegion,
+    this.notifyListeners = true,
+  });
+
+  final DocumentSelection? newSelection;
+  final DocumentRange? newComposingRegion;
+
+  /// Whether to notify [DocumentComposer] listeners when the selection is changed.
+  // TODO: configure the composer so it plugs into the editor in way that this is unnecessary.
+  final bool notifyListeners;
+
+  final String reason;
+
+  @override
+  List<DocumentChangeEvent> execute(EditorContext context) {
+    final composer = context.find<DocumentComposer>('composer');
+    composer.selectionComponent.updateSelection(newSelection);
+    composer.composingRegion.value = newComposingRegion;
+    return [const SelectionChangeEvent()];
   }
 }

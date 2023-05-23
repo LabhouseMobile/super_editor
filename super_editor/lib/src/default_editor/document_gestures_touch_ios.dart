@@ -2,20 +2,10 @@ import 'dart:math';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:super_editor/src/core/document.dart';
-import 'package:super_editor/src/core/document_layout.dart';
-import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/default_editor/document_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
-import 'package:super_editor/src/default_editor/text_tools.dart';
-import 'package:super_editor/src/document_operations/selection_operations.dart';
-import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
-import 'package:super_editor/src/infrastructure/touch_controls.dart';
-
-import '../infrastructure/document_gestures.dart';
-import 'document_gestures_touch.dart';
-import 'selection_upstream_downstream.dart';
+import 'package:super_editor/src/infrastructure/super_textfield/metrics.dart';
+import 'package:super_editor/super_editor.dart';
 
 /// Document gesture interactor that's designed for iOS touch input, e.g.,
 /// drag to scroll, and handles to control selection.
@@ -23,6 +13,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
   const IOSDocumentTouchInteractor({
     Key? key,
     required this.focusNode,
+    required this.editor,
     required this.document,
     required this.documentKey,
     required this.getDocumentLayout,
@@ -40,6 +31,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
 
   final FocusNode focusNode;
 
+  final DocumentEditor editor;
   final Document document;
   final GlobalKey documentKey;
   final DocumentLayout Function() getDocumentLayout;
@@ -583,7 +575,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         _selectPosition(docPosition);
       }
     } else {
-      widget.selection.value = null;
+      widget.editor.execute(const ChangeSelectionRequest(
+        null,
+        'reason',
+      ));
+
       _editingController.hideToolbar();
     }
 
@@ -636,7 +632,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         _selectPosition(docPosition);
       }
     } else {
-      widget.selection.value = null;
+      widget.editor.execute(const ChangeSelectionRequest(
+        null,
+        'reason',
+      ));
     }
 
     final newSelection = widget.selection.value;
@@ -654,16 +653,19 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     if (position.nodePosition is! UpstreamDownstreamNodePosition) {
       return false;
     }
-
-    widget.selection.value = DocumentSelection(
-      base: DocumentPosition(
-        nodeId: position.nodeId,
-        nodePosition: const UpstreamDownstreamNodePosition.upstream(),
-      ),
-      extent: DocumentPosition(
-        nodeId: position.nodeId,
-        nodePosition: const UpstreamDownstreamNodePosition.downstream(),
-      ),
+    widget.editor.execute(
+      ChangeSelectionRequest(
+          DocumentSelection(
+            base: DocumentPosition(
+              nodeId: position.nodeId,
+              nodePosition: const UpstreamDownstreamNodePosition.upstream(),
+            ),
+            extent: DocumentPosition(
+              nodeId: position.nodeId,
+              nodePosition: const UpstreamDownstreamNodePosition.downstream(),
+            ),
+          ),
+          'reason'),
     );
 
     return true;
@@ -702,7 +704,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         _selectPosition(docPosition);
       }
     } else {
-      widget.selection.value = null;
+      widget.editor.execute(const ChangeSelectionRequest(
+        null,
+        'reason',
+      ));
     }
 
     final selection = widget.selection.value;
@@ -853,17 +858,26 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     }
 
     if (_dragHandleType == HandleType.collapsed) {
-      widget.selection.value = DocumentSelection.collapsed(
-        position: docDragPosition,
-      );
+      widget.editor.execute(ChangeSelectionRequest(
+        DocumentSelection.collapsed(
+          position: docDragPosition,
+        ),
+        'reason',
+      ));
     } else if (_dragHandleType == HandleType.upstream) {
-      widget.selection.value = widget.selection.value!.copyWith(
-        base: docDragPosition,
-      );
+      widget.editor.execute(ChangeSelectionRequest(
+        widget.selection.value!.copyWith(
+          base: docDragPosition,
+        ),
+        'reason',
+      ));
     } else if (_dragHandleType == HandleType.downstream) {
-      widget.selection.value = widget.selection.value!.copyWith(
-        extent: docDragPosition,
-      );
+      widget.editor.execute(ChangeSelectionRequest(
+        widget.selection.value!.copyWith(
+          extent: docDragPosition,
+        ),
+        'reason',
+      ));
     }
   }
 
@@ -940,10 +954,14 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
         break;
     }
 
-    widget.selection.value = DocumentSelection(
-      base: basePosition,
-      extent: extentPosition,
-    );
+    widget.editor.execute(ChangeSelectionRequest(
+      DocumentSelection(
+        base: basePosition,
+        extent: extentPosition,
+      ),
+      'reason',
+    ));
+
     editorGesturesLog.fine("Selected region: ${widget.selection.value}");
   }
 
@@ -1043,7 +1061,6 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       return;
     }
 
-    const toolbarGap = 24.0;
     late Rect selectionRect;
     Offset toolbarTopAnchor;
     Offset toolbarBottomAnchor;
@@ -1084,8 +1101,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     //       the left side of the screen. This logic will position the
     //       toolbar near the left side of the content, when the toolbar should
     //       instead be centered across the full width of the document.
-    toolbarTopAnchor = selectionRect.topCenter - const Offset(0, toolbarGap);
-    toolbarBottomAnchor = selectionRect.bottomCenter + const Offset(0, toolbarGap);
+    toolbarTopAnchor = selectionRect.topCenter - const Offset(0, gapBetweenToolbarAndContent);
+    toolbarBottomAnchor = selectionRect.bottomCenter + const Offset(0, gapBetweenToolbarAndContent);
 
     _editingController.positionToolbar(
       topAnchor: toolbarTopAnchor,
@@ -1118,7 +1135,10 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }) {
     final newSelection = getWordSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
-      widget.selection.value = newSelection;
+      widget.editor.execute(ChangeSelectionRequest(
+        newSelection,
+        'reason',
+      ));
       return true;
     } else {
       return false;
@@ -1143,7 +1163,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }) {
     final newSelection = getParagraphSelection(docPosition: docPosition, docLayout: docLayout);
     if (newSelection != null) {
-      widget.selection.value = newSelection;
+      widget.editor.execute(ChangeSelectionRequest(
+        newSelection,
+        'reason',
+      ));
+
       return true;
     } else {
       return false;
@@ -1168,9 +1192,12 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
 
   void _selectPosition(DocumentPosition position) {
     editorGesturesLog.fine("Setting document selection to $position");
-    widget.selection.value = DocumentSelection.collapsed(
-      position: position,
-    );
+    widget.editor.execute(ChangeSelectionRequest(
+      DocumentSelection.collapsed(
+        position: position,
+      ),
+      'reason',
+    ));
   }
 
   ScrollableState? _findAncestorScrollable(BuildContext context) {
