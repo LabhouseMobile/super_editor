@@ -13,6 +13,7 @@ import 'package:super_editor/src/infrastructure/blinking_caret.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/android_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/magnifier.dart';
 import 'package:super_editor/src/infrastructure/platforms/android/selection_handles.dart';
+import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/toolbar_position_delegate.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
 import 'package:super_text_layout/super_text_layout.dart';
@@ -38,6 +39,7 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
     this.createOverlayControlsClipper,
     this.showDebugPaint = false,
     this.contentTapHandler,
+    this.overlayController,
     required this.child,
   }) : super(key: key);
 
@@ -53,6 +55,9 @@ class AndroidDocumentTouchInteractor extends StatefulWidget {
   final ContentTapDelegate? contentTapHandler;
 
   final ScrollController? scrollController;
+
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  final MagnifierAndToolbarController? overlayController;
 
   /// The closest that the user's selection drag gesture can get to the
   /// document boundary before auto-scrolling.
@@ -90,6 +95,9 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   // ancestor scrollable.
   late ScrollController _scrollController;
   final bool _isScrolling = false;
+
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  late MagnifierAndToolbarController _overlayController;
 
   // The ScrollPosition attached to the _ancestorScrollable, if there's an ancestor
   // Scrollable.
@@ -149,9 +157,12 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
     // TODO: rely solely on a ScrollPosition listener, not a ScrollController listener.
     _scrollController.addListener(_onScrollChange);
 
+    _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
+
     _editingController = AndroidDocumentGestureEditingController(
       documentLayoutLink: _documentLayoutLink,
       magnifierFocalPointLink: _magnifierFocalPointLink,
+      overlayController: _overlayController,
     );
 
     widget.document.addListener(_onDocumentChange);
@@ -212,6 +223,11 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
       if (widget.selection.value != oldWidget.selection.value) {
         _onSelectionChange();
       }
+    }
+
+    if (widget.overlayController != oldWidget.overlayController) {
+      _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
+      _editingController.overlayController = _overlayController;
     }
 
     if (widget.getDocumentLayout != oldWidget.getDocumentLayout) {

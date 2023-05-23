@@ -51,6 +51,7 @@ export 'src/infrastructure/keyboard.dart';
 export 'src/infrastructure/multi_tap_gesture.dart';
 export 'src/infrastructure/platforms/android/android_document_controls.dart';
 export 'src/infrastructure/platforms/ios/ios_document_controls.dart';
+export 'src/infrastructure/platforms/mobile_documents.dart';
 export 'src/infrastructure/scrolling_diagnostics/scrolling_diagnostics.dart';
 export 'src/infrastructure/signal_notifier.dart';
 export 'src/infrastructure/strings.dart';

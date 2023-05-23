@@ -4,6 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/default_editor/document_gestures_interaction_overrides.dart';
 import 'package:super_editor/src/default_editor/document_selection_on_focus_mixin.dart';
+import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/super_textfield/metrics.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -26,6 +27,7 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
     this.createOverlayControlsClipper,
     this.contentTapHandler,
     this.showDebugPaint = false,
+    this.overlayController,
     required this.child,
   }) : super(key: key);
 
@@ -42,6 +44,9 @@ class IOSDocumentTouchInteractor extends StatefulWidget {
   final ContentTapDelegate? contentTapHandler;
 
   final ScrollController? scrollController;
+
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  final MagnifierAndToolbarController? overlayController;
 
   /// The closest that the user's selection drag gesture can get to the
   /// document boundary before auto-scrolling.
@@ -83,6 +88,8 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   // ancestor scrollable.
   late ScrollController _scrollController;
   final bool _isScrolling = false;
+
+  late MagnifierAndToolbarController _overlayController;
 
   // The ScrollPosition attached to the _ancestorScrollable.
   ScrollPosition? _ancestorScrollPosition;
@@ -154,9 +161,12 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     // TODO: rely solely on a ScrollPosition listener, not a ScrollController listener.
     _scrollController.addListener(_onScrollChange);
 
+    _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
+
     _editingController = IosDocumentGestureEditingController(
       documentLayoutLink: _documentLayerLink,
       magnifierFocalPointLink: _magnifierFocalPointLink,
+      overlayController: _overlayController,
     );
 
     widget.document.addListener(_onDocumentChange);
@@ -224,6 +234,11 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       if (widget.selection.value != oldWidget.selection.value) {
         _onSelectionChange();
       }
+    }
+
+    if (widget.overlayController != oldWidget.overlayController) {
+      _overlayController = widget.overlayController ?? MagnifierAndToolbarController();
+      _editingController.overlayController = _overlayController;
     }
 
     if (widget.getDocumentLayout != oldWidget.getDocumentLayout) {

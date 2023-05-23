@@ -16,6 +16,7 @@ import 'package:super_editor/src/default_editor/document_gestures_touch_ios.dart
 import 'package:super_editor/src/default_editor/document_scrollable.dart';
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
+import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_text_layout/super_text_layout.dart';
 
 import 'attributions.dart';
@@ -100,6 +101,7 @@ class SuperEditor extends StatefulWidget {
     this.documentOverlayBuilders = const [DefaultCaretOverlayBuilder()],
     this.debugPaint = const DebugPaintConfig(),
     this.autofocus = false,
+    this.overlayController,
   })  : stylesheet = stylesheet ?? defaultStylesheet,
         selectionStyles = selectionStyle ?? defaultSelectionStyle,
         keyboardActions = keyboardActions ?? defaultKeyboardActions,
@@ -120,6 +122,9 @@ class SuperEditor extends StatefulWidget {
   /// `scrollController` is not used if this `SuperEditor` has an ancestor
   /// `Scrollable`.
   final ScrollController? scrollController;
+
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  final MagnifierAndToolbarController? overlayController;
 
   /// [GlobalKey] that's bound to the [DocumentLayout] within
   /// this `SuperEditor`.
@@ -549,6 +554,7 @@ class SuperEditorState extends State<SuperEditor> {
           popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           showDebugPaint: widget.debugPaint.gestures,
+          overlayController: widget.overlayController,
           child: documentLayout,
         );
       case DocumentGestureMode.iOS:
@@ -565,6 +571,7 @@ class SuperEditorState extends State<SuperEditor> {
           floatingCursorController: _floatingCursorController,
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           showDebugPaint: widget.debugPaint.gestures,
+          overlayController: widget.overlayController,
           child: documentLayout,
         );
     }

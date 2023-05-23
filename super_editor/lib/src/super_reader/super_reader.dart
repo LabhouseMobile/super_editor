@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_debug_paint.dart';
-import 'package:super_editor/src/core/document_editor.dart';
 import 'package:super_editor/src/core/document_interaction.dart';
 import 'package:super_editor/src/core/document_layout.dart';
 import 'package:super_editor/src/core/document_selection.dart';
@@ -21,6 +20,7 @@ import 'package:super_editor/src/default_editor/layout_single_column/_styler_use
 import 'package:super_editor/src/default_editor/list_items.dart';
 import 'package:super_editor/src/default_editor/paragraph.dart';
 import 'package:super_editor/src/default_editor/unknown_component.dart';
+import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 
 import 'read_only_document_android_touch_interactor.dart';
 import 'read_only_document_ios_touch_interactor.dart';
@@ -49,6 +49,7 @@ class SuperReader extends StatefulWidget {
     this.iOSToolbarBuilder,
     this.createOverlayControlsClipper,
     this.autofocus = false,
+    this.overlayController,
     this.debugPaint = const DebugPaintConfig(),
   })  : stylesheet = stylesheet ?? readOnlyDefaultStylesheet,
         selectionStyles = selectionStyle ?? readOnlyDefaultSelectionStyle,
@@ -78,6 +79,9 @@ class SuperReader extends StatefulWidget {
   /// [scrollController] is not used if this [SuperReader] has an ancestor
   /// [Scrollable].
   final ScrollController? scrollController;
+
+  /// Shows, hides, and positions a floating toolbar and magnifier.
+  final MagnifierAndToolbarController? overlayController;
 
   /// Style rules applied through the document presentation.
   final Stylesheet stylesheet;
@@ -245,8 +249,7 @@ class SuperReaderState extends State<SuperReader> {
   }
 
   void _recomputeIfLayoutShouldShowCaret() {
-    _docLayoutSelectionStyler.shouldDocumentShowCaret =
-        _focusNode.hasFocus && _gestureMode == DocumentGestureMode.mouse;
+    _docLayoutSelectionStyler.shouldDocumentShowCaret = _focusNode.hasFocus && _gestureMode == DocumentGestureMode.mouse;
   }
 
   DocumentGestureMode get _gestureMode {
@@ -313,6 +316,7 @@ class SuperReaderState extends State<SuperReader> {
           popoverToolbarBuilder: widget.androidToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           showDebugPaint: widget.debugPaint.gestures,
+          overlayController: widget.overlayController,
           child: documentLayout,
         );
       case DocumentGestureMode.iOS:
@@ -327,6 +331,7 @@ class SuperReaderState extends State<SuperReader> {
           popoverToolbarBuilder: widget.iOSToolbarBuilder ?? (_) => const SizedBox(),
           createOverlayControlsClipper: widget.createOverlayControlsClipper,
           showDebugPaint: widget.debugPaint.gestures,
+          overlayController: widget.overlayController,
           child: documentLayout,
         );
     }
