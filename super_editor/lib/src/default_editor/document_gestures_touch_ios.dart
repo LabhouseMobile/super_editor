@@ -345,9 +345,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   void _onDocumentChange(DocumentChangeLog changeLog) {
-    if (changeLog.changes.any((element) => element is! SelectionChangeEvent)) {
-      _editingController.hideToolbar();
-    }
+    _editingController.hideToolbar();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (!mounted) return;
