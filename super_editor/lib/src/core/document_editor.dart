@@ -377,7 +377,7 @@ class MutableDocument implements Document {
   @protected
   void notifyListeners(DocumentChangeLog changeLog) {
     final documentChanges = changeLog.changes.where((el) => el is! SelectionChangeEvent).toList();
-
+    if (documentChanges.isEmpty) return;
     for (final listener in _listeners) {
       listener(DocumentChangeLog(documentChanges));
     }
