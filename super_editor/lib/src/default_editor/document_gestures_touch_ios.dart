@@ -11,7 +11,6 @@ import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/text_tools.dart';
 import 'package:super_editor/src/document_operations/selection_operations.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
-import 'package:super_editor/src/infrastructure/multi_tap_gesture.dart';
 import 'package:super_editor/src/infrastructure/platforms/ios/ios_document_controls.dart';
 import 'package:super_editor/src/infrastructure/platforms/mobile_documents.dart';
 import 'package:super_editor/src/infrastructure/touch_controls.dart';
@@ -496,7 +495,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
   }
 
   bool _wasScrollingOnTapDown = false;
-  void _onTapDown(TapDownDetails details) {
+  void _onTapDown(TapDragDownDetails details) {
     // When the user scrolls and releases, the scrolling continues with momentum.
     // If the user then taps down again, the momentum stops. When this happens, we
     // still receive tap callbacks. But we don't want to take any further action,
@@ -515,7 +514,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     }
   }
 
-  void _onTapUp(TapUpDetails details) {
+  void _onTapUp(TapDragUpDetails details) {
     if (_wasScrollingOnTapDown) {
       // The scrollable was scrolling when the user touched down. We expect that the
       // touch down stopped the scrolling momentum. We don't want to take any further
@@ -1298,15 +1297,13 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     return RawGestureDetector(
       behavior: HitTestBehavior.opaque,
       gestures: <Type, GestureRecognizerFactory>{
-        TapSequenceGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapSequenceGestureRecognizer>(
-          () => TapSequenceGestureRecognizer(),
-          (TapSequenceGestureRecognizer recognizer) {
+        TapAndPanGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapAndPanGestureRecognizer>(
+          () => TapAndPanGestureRecognizer(),
+          (TapAndPanGestureRecognizer recognizer) {
             recognizer
               ..onTapDown = _onTapDown
               ..onTapUp = _onTapUp
-              ..onDoubleTapUp = _onDoubleTapUp
-              ..onTripleTapUp = _onTripleTapUp
-              ..onTimeout = _onTapTimeout
+              ..onCancel = _onTapTimeout
               ..gestureSettings = gestureSettings;
           },
         ),
