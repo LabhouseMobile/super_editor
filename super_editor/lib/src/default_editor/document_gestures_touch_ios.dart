@@ -494,8 +494,40 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     );
   }
 
+  static int _getEffectiveConsecutiveTapCount(int rawCount) {
+    switch (TargetPlatform.iOS) {
+      case TargetPlatform.android:
+      case TargetPlatform.fuchsia:
+      case TargetPlatform.linux:
+        // From observation, these platform's reset their tap count to 0 when
+        // the number of consecutive taps exceeds 3. For example on Debian Linux
+        // with GTK, when going past a triple click, on the fourth click the
+        // selection is moved to the precise click position, on the fifth click
+        // the word at the position is selected, and on the sixth click the
+        // paragraph at the position is selected.
+        return rawCount <= 3 ? rawCount : (rawCount % 3 == 0 ? 3 : rawCount % 3);
+      case TargetPlatform.iOS:
+      case TargetPlatform.macOS:
+        // From observation, these platform's either hold their tap count at 3.
+        // For example on macOS, when going past a triple click, the selection
+        // should be retained at the paragraph that was first selected on triple
+        // click.
+        return min(rawCount, 3);
+      case TargetPlatform.windows:
+        // From observation, this platform's consecutive tap actions alternate
+        // between double click and triple click actions. For example, after a
+        // triple click has selected a paragraph, on the next click the word at
+        // the clicked position will be selected, and on the next click the
+        // paragraph at the position is selected.
+        return rawCount < 2 ? rawCount : 2 + rawCount % 2;
+    }
+  }
+
   bool _wasScrollingOnTapDown = false;
   void _onTapDown(TapDragDownDetails details) {
+    if (_getEffectiveConsecutiveTapCount(details.consecutiveTapCount) != 1) {
+      return;
+    }
     // When the user scrolls and releases, the scrolling continues with momentum.
     // If the user then taps down again, the momentum stops. When this happens, we
     // still receive tap callbacks. But we don't want to take any further action,
@@ -519,6 +551,17 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
       // The scrollable was scrolling when the user touched down. We expect that the
       // touch down stopped the scrolling momentum. We don't want to take any further
       // action on this touch event. The user will tap again to change the selection.
+      return;
+    }
+
+    var tapCount = _getEffectiveConsecutiveTapCount(details.consecutiveTapCount);
+    if (tapCount == 2) {
+      _onDoubleTapUp(details);
+      return;
+    }
+
+    if (tapCount == 3) {
+      _onTripleTapUp(details);
       return;
     }
 
@@ -603,7 +646,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     widget.focusNode.requestFocus();
   }
 
-  void _onDoubleTapUp(TapUpDetails details) {
+  void _onDoubleTapUp(TapDragUpDetails details) {
     final selection = widget.selection.value;
     if (selection != null &&
         !selection.isCollapsed &&
@@ -688,7 +731,7 @@ class _IOSDocumentTouchInteractorState extends State<IOSDocumentTouchInteractor>
     return true;
   }
 
-  void _onTripleTapUp(TapUpDetails details) {
+  void _onTripleTapUp(TapDragUpDetails details) {
     editorGesturesLog.info("Triple down down on document");
 
     final docOffset = _interactorOffsetToDocOffset(details.localPosition);
