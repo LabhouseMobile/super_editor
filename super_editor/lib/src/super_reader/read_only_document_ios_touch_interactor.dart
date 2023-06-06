@@ -199,7 +199,7 @@ class _ReadOnlyIOSDocumentTouchInteractorState extends State<ReadOnlyIOSDocument
     // this.scrollPosition might be null.
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       final newScrollPosition = scrollPosition;
-      if (newScrollPosition != _activeScrollPosition) {
+      if (newScrollPosition != _activeScrollPosition && mounted) {
         setState(() {
           _activeScrollPosition?.removeListener(_onScrollChange);
           newScrollPosition.addListener(_onScrollChange);
