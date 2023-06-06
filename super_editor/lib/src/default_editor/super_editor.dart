@@ -453,8 +453,6 @@ class SuperEditorState extends State<SuperEditor> {
 
     _previousSelectionExtent = _composer.selection?.extent;
 
-    _composer.preferences.clearStyles();
-
     if (_composer.selection == null || !_composer.selection!.isCollapsed) {
       return;
     }
@@ -469,6 +467,8 @@ class SuperEditorState extends State<SuperEditor> {
     if (textPosition.offset == 0 && node.text.text.isEmpty) {
       return;
     }
+
+    _composer.preferences.clearStyles();
 
     late int currentAttributionsOffset;
     if (textPosition.offset == 0) {
