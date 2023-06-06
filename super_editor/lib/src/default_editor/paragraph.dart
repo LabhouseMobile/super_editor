@@ -1,6 +1,6 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_selection.dart';
@@ -72,8 +72,7 @@ class ParagraphComponentBuilder implements ComponentBuilder {
   }
 
   @override
-  TextComponent? createComponent(
-      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+  Widget? createComponent(SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
     if (componentViewModel is! ParagraphComponentViewModel) {
       return null;
     }
@@ -122,6 +121,7 @@ class ParagraphComponentViewModel extends SingleColumnLayoutComponentViewModel w
   }) : super(nodeId: nodeId, maxWidth: maxWidth, padding: padding);
 
   Attribution? blockType;
+  @override
   AttributedText text;
   @override
   AttributionStyleBuilder textStyleBuilder;
