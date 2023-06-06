@@ -3,11 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/super_editor.dart';
 
 abstract class EditRule {
-  Editor get editor;
   DocumentComposer get composer;
   Document get document;
 
-  ExecutionInstruction apply(TextEditingDelta delta);
+  ExecutionInstruction apply(Editor editor, TextEditingDelta delta);
 }
 
 class EditRules {
@@ -16,9 +15,9 @@ class EditRules {
   });
   final List<EditRule> rules;
 
-  ExecutionInstruction apply(TextEditingDelta delta) {
+  ExecutionInstruction apply(Editor editor, TextEditingDelta delta) {
     for (final rule in rules) {
-      final execution = rule.apply(delta);
+      final execution = rule.apply(editor, delta);
       if (execution == ExecutionInstruction.blocked || execution == ExecutionInstruction.haltExecution) {
         return execution;
       }

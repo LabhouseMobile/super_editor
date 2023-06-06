@@ -69,7 +69,7 @@ class TextDeltasDocumentEditor {
       editorImeLog.info("Applying delta: $delta");
 
       // ignore: unused_local_variable
-      final execution = editor.rules.apply(delta);
+      final execution = editor.rules.apply(editor, delta);
       if (execution != ExecutionInstruction.continueExecution) continue;
 
       _nextImeValue = delta.apply(_previousImeValue);
