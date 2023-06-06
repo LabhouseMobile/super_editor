@@ -67,6 +67,10 @@ class TextDeltasDocumentEditor {
 
       editorImeLog.info("Applying delta: $delta");
 
+      // ignore: unused_local_variable
+      final execution = editor.rules.apply(editor, commonOps.composer, delta);
+      if (execution != ExecutionInstruction.continueExecution) continue;
+
       _nextImeValue = delta.apply(_previousImeValue);
       if (delta is TextEditingDeltaInsertion) {
         _applyInsertion(delta);

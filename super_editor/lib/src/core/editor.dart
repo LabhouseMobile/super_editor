@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:collection/collection.dart';
+import 'package:super_editor/addon/rules.dart';
 import 'package:super_editor/src/core/document_selection.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
 import 'package:uuid/uuid.dart';
@@ -49,11 +50,13 @@ class Editor implements RequestDispatcher {
   Editor({
     required Map<String, Editable> editables,
     required List<EditRequestHandler> requestHandlers,
+    List<EditRule> rules = const [],
     List<EditReaction>? reactionPipeline,
     List<EditListener>? listeners,
   })  : _requestHandlers = requestHandlers,
         _reactionPipeline = reactionPipeline ?? [],
-        _changeListeners = listeners ?? [] {
+        _changeListeners = listeners ?? [],
+        rules = EditRules(rules: rules) {
     _context = EditContext(editables);
 
     _commandExecutor = _DocumentEditorCommandExecutor(_context);
@@ -63,6 +66,11 @@ class Editor implements RequestDispatcher {
     _reactionPipeline.clear();
     _changeListeners.clear();
   }
+
+  /// Chain of responsability that allows to customize the editor experience.
+  ///
+  /// Recieves a [TextEditingDelta] and is able to insert a new [EditRequest]
+  final EditRules rules;
 
   /// Chain of Responsibility that maps a given [EditRequest] to an [EditCommand].
   final List<EditRequestHandler> _requestHandlers;
