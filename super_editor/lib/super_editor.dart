@@ -3,6 +3,8 @@ library super_editor;
 export 'package:attributed_text/attributed_text.dart';
 export 'package:super_text_layout/src/caret_layer.dart';
 
+// Add ons
+export 'addon/rules.dart';
 // Fundamental document abstractions
 export 'src/core/document.dart';
 export 'src/core/document_composer.dart';
