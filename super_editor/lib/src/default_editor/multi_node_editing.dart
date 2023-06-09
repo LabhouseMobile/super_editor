@@ -4,8 +4,8 @@ import 'package:attributed_text/attributed_text.dart';
 import 'package:flutter/services.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
-import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/core/document_selection.dart';
+import 'package:super_editor/src/core/editor.dart';
 import 'package:super_editor/src/default_editor/selection_upstream_downstream.dart';
 import 'package:super_editor/src/default_editor/text.dart';
 import 'package:super_editor/src/infrastructure/_logging.dart';
@@ -39,7 +39,7 @@ class InsertNodeAtIndexCommand extends EditCommand {
     document.insertNodeAt(nodeIndex, newNode);
     executor.logChanges([
       DocumentEdit(
-        NodeInsertedEvent(newNode.id, nodeIndex),
+        NodeInsertedEvent(newNode.id, nodeIndex, snapshot: newNode.clone()),
       )
     ]);
   }
@@ -72,7 +72,7 @@ class InsertNodeBeforeNodeCommand extends EditCommand {
 
     executor.logChanges([
       DocumentEdit(
-        NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id)),
+        NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id), snapshot: newNode.clone()),
       )
     ]);
   }
@@ -105,7 +105,7 @@ class InsertNodeAfterNodeCommand extends EditCommand {
 
     executor.logChanges([
       DocumentEdit(
-        NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id)),
+        NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id), snapshot: newNode.clone()),
       )
     ]);
   }
@@ -154,7 +154,7 @@ class InsertNodeAtCaretCommand extends EditCommand {
       document.insertNodeBefore(existingNode: selectedNode, newNode: newNode);
       executor.logChanges([
         DocumentEdit(
-          NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id)),
+          NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id), snapshot: newNode.clone()),
         ),
       ]);
 
@@ -169,7 +169,7 @@ class InsertNodeAtCaretCommand extends EditCommand {
       document.insertNodeAt(document.getNodeIndexById(selectedNode.id), newNode);
       executor.logChanges([
         DocumentEdit(
-          NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id)),
+          NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id), snapshot: newNode.clone()),
         )
       ]);
 
@@ -184,7 +184,7 @@ class InsertNodeAtCaretCommand extends EditCommand {
       document.insertNodeAfter(existingNode: selectedNode, newNode: newNode);
       executor.logChanges([
         DocumentEdit(
-          NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id)),
+          NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id), snapshot: newNode.clone()),
         )
       ]);
 
@@ -195,6 +195,7 @@ class InsertNodeAtCaretCommand extends EditCommand {
         ),
       );
     } else {
+      final oldNode = selectedNode.clone();
       // Split the paragraph and inset image in between.
       final textBefore = selectedNode.text.copyText(0, paragraphPosition.offset);
       final textAfter = selectedNode.text.copyText(paragraphPosition.offset);
@@ -207,13 +208,14 @@ class InsertNodeAtCaretCommand extends EditCommand {
         ..insertNodeAfter(existingNode: newNode, newNode: newParagraph);
       executor.logChanges([
         DocumentEdit(
-          NodeChangeEvent(selectedNodeId),
+          NodeChangeEvent(selectedNodeId, snapshot: oldNode, newSnapshot: selectedNode.clone()),
         ),
         DocumentEdit(
-          NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id)),
+          NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id), snapshot: newNode.clone()),
         ),
         DocumentEdit(
-          NodeInsertedEvent(newParagraph.id, document.getNodeIndexById(newParagraph.id)),
+          NodeInsertedEvent(newParagraph.id, document.getNodeIndexById(newParagraph.id),
+              snapshot: newParagraph.clone()),
         ),
       ]);
 
@@ -324,14 +326,19 @@ class ReplaceNodeCommand extends EditCommand {
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
     final oldNode = document.getNodeById(existingNodeId)!;
+    final indexToRemove = document.getNodeIndexById(oldNode.id);
     document.replaceNode(oldNode: oldNode, newNode: newNode);
 
     executor.logChanges([
       DocumentEdit(
-        NodeRemovedEvent(existingNodeId),
+        NodeRemovedEvent(
+          existingNodeId,
+          snapshot: oldNode,
+          index: indexToRemove,
+        ),
       ),
       DocumentEdit(
-        NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id)),
+        NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id), snapshot: newNode.clone()),
       ),
     ]);
   }
@@ -375,14 +382,15 @@ class ReplaceNodeWithEmptyParagraphWithCaretCommand implements EditCommand {
       id: oldNode.id,
       text: AttributedText(),
     );
+    final indexToRemove = document.getNodeIndexById(oldNode.id);
     document.replaceNode(oldNode: oldNode, newNode: newNode);
 
     executor.logChanges([
       DocumentEdit(
-        NodeRemovedEvent(oldNode.id),
+        NodeRemovedEvent(oldNode.id, snapshot: oldNode, index: indexToRemove),
       ),
       DocumentEdit(
-        NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id)),
+        NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id), snapshot: newNode.clone()),
       ),
     ]);
 
@@ -487,13 +495,14 @@ class DeleteSelectionCommand implements EditCommand {
     // to position the caret.
     if (document.getNodeById(startNode.id) == null && document.getNodeById(endNode.id) == null) {
       final insertIndex = min(startNodeIndex, endNodeIndex);
+      final newNode = ParagraphNode(id: baseNode!.id, text: AttributedText());
       document.insertNodeAt(
         insertIndex,
-        ParagraphNode(id: baseNode!.id, text: AttributedText()),
+        newNode,
       );
       executor.logChanges([
         DocumentEdit(
-          NodeChangeEvent(baseNode.id),
+          NodeInsertedEvent(baseNode.id, insertIndex, snapshot: newNode.clone()),
         )
       ]);
     }
@@ -512,20 +521,21 @@ class DeleteSelectionCommand implements EditCommand {
       // for us to merge. We're done.
       return;
     }
-
+    final oldNode = startNodeAfterDeletion.clone();
     _log.log('DeleteSelectionCommand', ' - combining last node text with first node text');
     startNodeAfterDeletion.text = startNodeAfterDeletion.text.copyAndAppend(endNodeAfterDeletion.text);
     executor.logChanges([
       DocumentEdit(
-        NodeChangeEvent(startNodeAfterDeletion.id),
+        NodeChangeEvent(startNodeAfterDeletion.id, snapshot: oldNode, newSnapshot: startNodeAfterDeletion.clone()),
       )
     ]);
 
     _log.log('DeleteSelectionCommand', ' - deleting last node');
+    final indexToRemove = document.getNodeIndexById(oldNode.id);
     document.deleteNode(endNodeAfterDeletion);
     executor.logChanges([
       DocumentEdit(
-        NodeRemovedEvent(endNodeAfterDeletion.id),
+        NodeRemovedEvent(endNodeAfterDeletion.id, snapshot: endNodeAfterDeletion, index: indexToRemove),
       )
     ]);
     _log.log('DeleteSelectionCommand', ' - done with selection deletion');
@@ -546,17 +556,22 @@ class DeleteSelectionCommand implements EditCommand {
         return [];
       }
 
+      final newNode = ParagraphNode(id: node.id, text: AttributedText());
       // The selection is expanded within a block-level node. The only
       // possibility is that the entire node is selected. Delete the node
       // and replace it with an empty paragraph.
       document.replaceNode(
         oldNode: node,
-        newNode: ParagraphNode(id: node.id, text: AttributedText()),
+        newNode: newNode,
       );
 
       return [
         DocumentEdit(
-          NodeChangeEvent(node.id),
+          NodeChangeEvent(
+            node.id,
+            snapshot: node.clone(),
+            newSnapshot: newNode.clone(),
+          ),
         )
       ];
     } else if (node is TextNode) {
@@ -567,6 +582,7 @@ class DeleteSelectionCommand implements EditCommand {
       final endOffset = baseOffset < extentOffset ? extentOffset : baseOffset;
       _log.log('_deleteSelectionWithinSingleNode', ' - deleting from $startOffset to $endOffset');
 
+      final oldNode = node.clone();
       final deletedText = node.text.copyText(startOffset, endOffset);
       node.text = node.text.removeRegion(
         startOffset: startOffset,
@@ -579,6 +595,8 @@ class DeleteSelectionCommand implements EditCommand {
             node.id,
             deletedText: deletedText,
             offset: startOffset,
+            snapshot: oldNode,
+            newSnapshot: node.clone(),
           ),
         ),
       ];
@@ -606,7 +624,7 @@ class DeleteSelectionCommand implements EditCommand {
     for (int i = endIndex - 1; i > startIndex; --i) {
       _log.log('_deleteNodesBetweenFirstAndLast', ' - deleting node $i: ${document.getNodeAt(i)?.id}');
       changes.add(DocumentEdit(
-        NodeRemovedEvent(document.getNodeAt(i)!.id),
+        NodeRemovedEvent(document.getNodeAt(i)!.id, snapshot: document.getNodeAt(i)!, index: i),
       ));
       document.deleteNodeAt(i);
     }
@@ -634,15 +652,17 @@ class DeleteSelectionCommand implements EditCommand {
       );
     } else if (nodePosition is TextPosition && node is TextNode) {
       if (nodePosition == node.beginningPosition) {
+        final index = document.getNodeIndexById(node.id);
         // All text is selected. Delete the node.
         document.deleteNode(node);
 
         return [
           DocumentEdit(
-            NodeRemovedEvent(node.id),
+            NodeRemovedEvent(node.id, snapshot: node, index: index),
           )
         ];
       } else {
+        final oldNode = node.clone();
         // Delete part of the text.
         node.text = node.text.removeRegion(
           startOffset: nodePosition.offset,
@@ -651,7 +671,7 @@ class DeleteSelectionCommand implements EditCommand {
 
         return [
           DocumentEdit(
-            NodeChangeEvent(node.id),
+            NodeChangeEvent(node.id, snapshot: oldNode, newSnapshot: node.clone()),
           )
         ];
       }
@@ -680,15 +700,17 @@ class DeleteSelectionCommand implements EditCommand {
       );
     } else if (nodePosition is TextPosition && node is TextNode) {
       if (nodePosition == node.endPosition) {
+        final index = document.getNodeIndexById(node.id);
         // All text is selected. Delete the node.
         document.deleteNode(node);
 
         return [
           DocumentEdit(
-            NodeRemovedEvent(node.id),
+            NodeRemovedEvent(node.id, snapshot: node, index: index),
           )
         ];
       } else {
+        final oldNode = node.clone();
         // Delete part of the text.
         node.text = node.text.removeRegion(
           startOffset: 0,
@@ -697,7 +719,7 @@ class DeleteSelectionCommand implements EditCommand {
 
         return [
           DocumentEdit(
-            NodeChangeEvent(node.id),
+            NodeChangeEvent(node.id, snapshot: oldNode, newSnapshot: node.clone()),
           )
         ];
       }
@@ -725,23 +747,25 @@ class DeleteSelectionCommand implements EditCommand {
       _log.log('_deleteBlockNode', ' - replacing block-level node with a ParagraphNode: ${node.id}');
 
       final newNode = ParagraphNode(id: node.id, text: AttributedText());
+      final indexToRemove = document.getNodeIndexById(node.id);
       document.replaceNode(oldNode: node, newNode: newNode);
 
       return [
         DocumentEdit(
-          NodeRemovedEvent(node.id),
+          NodeRemovedEvent(node.id, snapshot: node, index: indexToRemove),
         ),
         DocumentEdit(
-          NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id)),
+          NodeInsertedEvent(newNode.id, document.getNodeIndexById(newNode.id), snapshot: newNode.clone()),
         ),
       ];
     } else {
+      final index = document.getNodeIndexById(node.id);
       _log.log('_deleteBlockNode', ' - deleting block level node');
       document.deleteNode(node);
 
       return [
         DocumentEdit(
-          NodeRemovedEvent(node.id),
+          NodeRemovedEvent(node.id, snapshot: node, index: index),
         )
       ];
     }
@@ -773,13 +797,14 @@ class DeleteNodeCommand implements EditCommand {
       _log.log('DeleteNodeCommand', 'No such node. Returning.');
       return;
     }
+    final index = document.getNodeIndexById(node.id);
 
     _log.log('DeleteNodeCommand', ' - deleting node');
     document.deleteNode(node);
     _log.log('DeleteNodeCommand', ' - done with node deletion');
     executor.logChanges([
       DocumentEdit(
-        NodeRemovedEvent(node.id),
+        NodeRemovedEvent(node.id, snapshot: node, index: index),
       )
     ]);
   }

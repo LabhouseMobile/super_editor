@@ -28,6 +28,11 @@ class HorizontalRuleNode extends BlockNode with ChangeNotifier {
   }
 
   @override
+  DocumentNode clone() {
+    return HorizontalRuleNode(id:id);
+  }
+
+  @override
   bool hasEquivalentContent(DocumentNode other) {
     return other is HorizontalRuleNode;
   }

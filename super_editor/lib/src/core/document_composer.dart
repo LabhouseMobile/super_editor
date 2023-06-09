@@ -377,15 +377,20 @@ class ChangeSelectionCommand implements EditCommand {
 
 /// A [EditEvent] that represents a change to the user's selection within a document.
 class SelectionChangeEvent implements EditEvent {
-  const SelectionChangeEvent({
+   SelectionChangeEvent({
     required this.oldSelection,
     required this.newSelection,
     required this.oldComposingRegion,
     required this.newComposingRegion,
     required this.changeType,
     required this.reason,
-  });
+    this.metadata = const {},
+  }):createdAt = DateTime.now();
+  @override
+  final DateTime  createdAt;
 
+  @override
+  final Map<String, dynamic> metadata;
   final DocumentSelection? oldSelection;
   final DocumentSelection? newSelection;
   final DocumentRange? oldComposingRegion;

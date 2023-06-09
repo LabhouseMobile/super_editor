@@ -53,6 +53,11 @@ class TaskNode extends TextNode {
 
   @override
   int get hashCode => super.hashCode ^ isComplete.hashCode;
+
+  @override
+  DocumentNode clone() {
+    return TaskNode(id: id, text: text, isComplete: isComplete, metadata: metadata);
+  }
 }
 
 /// Styles all task components to apply top padding
@@ -138,6 +143,7 @@ class TaskComponentViewModel extends SingleColumnLayoutComponentViewModel with T
 
   bool isComplete;
   void Function(bool) setComplete;
+  @override
   AttributedText text;
 
   @override
@@ -336,12 +342,12 @@ class ChangeTaskCompletionCommand implements EditCommand {
     if (taskNode is! TaskNode) {
       return;
     }
-
+    final oldNode = taskNode.clone();
     taskNode.isComplete = isComplete;
 
     executor.logChanges([
       DocumentEdit(
-        NodeChangeEvent(nodeId),
+        NodeChangeEvent(nodeId, snapshot: oldNode, newSnapshot: taskNode.clone()),
       ),
     ]);
   }
@@ -446,6 +452,7 @@ class SplitExistingTaskCommand implements EditCommand {
       isComplete: false,
     );
 
+    final oldNode = node.clone();
     // Remove the text after the caret from the currently selected TaskNode.
     node.text = node.text.removeRegion(startOffset: splitOffset, endOffset: node.text.text.length);
 
@@ -467,10 +474,10 @@ class SplitExistingTaskCommand implements EditCommand {
 
     executor.logChanges([
       DocumentEdit(
-        NodeChangeEvent(node.id),
+        NodeChangeEvent(node.id, snapshot: oldNode, newSnapshot: node.clone()),
       ),
       DocumentEdit(
-        NodeInsertedEvent(newTaskNode.id, document.getNodeIndexById(newTaskNode.id)),
+        NodeInsertedEvent(newTaskNode.id, document.getNodeIndexById(newTaskNode.id), snapshot: newTaskNode.clone()),
       ),
       SelectionChangeEvent(
         oldSelection: oldSelection,

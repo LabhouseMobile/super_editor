@@ -80,6 +80,11 @@ class ListItemNode extends TextNode {
   }
 
   @override
+  DocumentNode clone() {
+    return ListItemNode(id: id, text: text, itemType: type, indent: indent, metadata: metadata);
+  }
+
+  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       super == other &&
@@ -188,6 +193,7 @@ class ListItemComponentViewModel extends SingleColumnLayoutComponentViewModel wi
   ListItemType type;
   int? ordinalValue;
   int indent;
+  @override
   AttributedText text;
 
   @override
@@ -458,12 +464,12 @@ class IndentListItemCommand implements EditCommand {
       _log.log('IndentListItemCommand', 'WARNING: Editor does not support an indent level beyond 6.');
       return;
     }
-
+    final oldNode = listItem.clone();
     listItem.indent += 1;
 
     executor.logChanges([
       DocumentEdit(
-        NodeChangeEvent(nodeId),
+        NodeChangeEvent(nodeId, snapshot: oldNode, newSnapshot: listItem.clone()),
       )
     ]);
   }
@@ -490,13 +496,14 @@ class UnIndentListItemCommand implements EditCommand {
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
     if (listItem.indent > 0) {
+      final oldNode = listItem.clone();
       // TODO: figure out how node changes should work in terms of
       //       a DocumentEditorTransaction (#67)
       listItem.indent -= 1;
 
       executor.logChanges([
         DocumentEdit(
-          NodeChangeEvent(nodeId),
+          NodeChangeEvent(nodeId, snapshot: oldNode,newSnapshot: listItem.clone()),
         )
       ]);
     } else {
@@ -533,7 +540,7 @@ class ConvertListItemToParagraphCommand implements EditCommand {
     final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     final listItem = node as ListItemNode;
-
+    final oldNode = listItem.clone();
     final newParagraphNode = ParagraphNode(
       id: listItem.id,
       text: listItem.text,
@@ -543,7 +550,7 @@ class ConvertListItemToParagraphCommand implements EditCommand {
 
     executor.logChanges([
       DocumentEdit(
-        NodeChangeEvent(listItem.id),
+        NodeChangeEvent(listItem.id, snapshot: oldNode,newSnapshot: newParagraphNode.clone()),
       )
     ]);
   }
@@ -573,7 +580,7 @@ class ConvertParagraphToListItemCommand implements EditCommand {
     final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     final paragraphNode = node as ParagraphNode;
-
+    final oldNode = paragraphNode.clone();
     final newListItemNode = ListItemNode(
       id: paragraphNode.id,
       itemType: type,
@@ -583,7 +590,7 @@ class ConvertParagraphToListItemCommand implements EditCommand {
 
     executor.logChanges([
       DocumentEdit(
-        NodeChangeEvent(paragraphNode.id),
+        NodeChangeEvent(paragraphNode.id, snapshot: oldNode,newSnapshot: newListItemNode.clone()),
       )
     ]);
   }
@@ -612,7 +619,7 @@ class ChangeListItemTypeCommand implements EditCommand {
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
     final existingListItem = document.getNodeById(nodeId) as ListItemNode;
-
+    final oldNode = existingListItem.clone();
     final newListItemNode = ListItemNode(
       id: existingListItem.id,
       itemType: newType,
@@ -622,7 +629,7 @@ class ChangeListItemTypeCommand implements EditCommand {
 
     executor.logChanges([
       DocumentEdit(
-        NodeChangeEvent(existingListItem.id),
+        NodeChangeEvent(existingListItem.id, snapshot: oldNode, newSnapshot: newListItemNode.clone()),
       )
     ]);
   }
@@ -656,6 +663,7 @@ class SplitListItemCommand implements EditCommand {
     final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     final listItemNode = node as ListItemNode;
+    final oldNode = listItemNode.clone();
     final text = listItemNode.text;
     final startText = text.copyText(0, splitPosition.offset);
     final endText = splitPosition.offset < text.text.length ? text.copyText(splitPosition.offset) : AttributedText();
@@ -694,10 +702,10 @@ class SplitListItemCommand implements EditCommand {
 
     executor.logChanges([
       DocumentEdit(
-        NodeChangeEvent(nodeId),
+        NodeChangeEvent(nodeId, snapshot: oldNode, newSnapshot: listItemNode.clone()),
       ),
       DocumentEdit(
-        NodeInsertedEvent(newNodeId, document.getNodeIndexById(newNodeId)),
+        NodeInsertedEvent(newNodeId, document.getNodeIndexById(newNodeId), snapshot: newNode.clone()),
       ),
     ]);
   }
