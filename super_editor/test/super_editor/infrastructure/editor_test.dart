@@ -628,7 +628,7 @@ void main() {
 
               final event = changeList.first as DocumentEdit;
               final change = event.change as NodeRemovedEvent;
-              removedNode = change.removedNode;
+              removedNode = change.snapshot;
             }),
           ],
         );

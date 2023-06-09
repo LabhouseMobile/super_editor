@@ -1,6 +1,6 @@
 import 'package:attributed_text/attributed_text.dart';
-import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
 import 'package:super_editor/src/core/document_layout.dart';
@@ -32,6 +32,11 @@ class ParagraphNode extends TextNode {
     if (getMetadataValue("blockType") == null) {
       putMetadataValue("blockType", paragraphAttribution);
     }
+  }
+
+  @override
+  DocumentNode clone() {
+    return ParagraphNode(id: id, text: text, metadata: metadata);
   }
 }
 
@@ -75,8 +80,7 @@ class ParagraphComponentBuilder implements ComponentBuilder {
   }
 
   @override
-  TextComponent? createComponent(
-      SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
+  Widget? createComponent(SingleColumnDocumentComponentContext componentContext, SingleColumnLayoutComponentViewModel componentViewModel) {
     if (componentViewModel is! ParagraphComponentViewModel) {
       return null;
     }
@@ -221,11 +225,12 @@ class ChangeParagraphBlockTypeCommand implements EditCommand {
     final document = context.find<MutableDocument>(Editor.documentKey);
 
     final existingNode = document.getNodeById(nodeId)! as ParagraphNode;
+    final oldNode = existingNode.clone();
     existingNode.putMetadataValue('blockType', blockType);
 
     executor.logChanges([
       DocumentEdit(
-        NodeChangeEvent(nodeId),
+        NodeChangeEvent(nodeId, snapshot: oldNode, newSnapshot: existingNode.clone()),
       ),
     ]);
   }
@@ -286,6 +291,7 @@ class CombineParagraphsCommand implements EditCommand {
 
     // Combine the text and delete the currently selected node.
     final isTopNodeEmpty = nodeAbove.text.text.isEmpty;
+    final oldNodeAbove = nodeAbove.clone();
     nodeAbove.text = nodeAbove.text.copyAndAppend(secondNode.text);
 
     // Avoid overriding the metadata when the nodeAbove isn't a ParagraphNode.
@@ -298,6 +304,7 @@ class CombineParagraphsCommand implements EditCommand {
       // bottom node, including the block attribution and styles.
       nodeAbove.metadata = secondNode.metadata;
     }
+    final indexToRemove = document.getNodeIndexById(secondNode.id);
     bool didRemove = document.deleteNode(secondNode);
     if (!didRemove) {
       editorDocLog.info('ERROR: Failed to delete the currently selected node from the document.');
@@ -305,10 +312,10 @@ class CombineParagraphsCommand implements EditCommand {
 
     executor.logChanges([
       DocumentEdit(
-        NodeRemovedEvent(secondNode.id, secondNode),
+        NodeRemovedEvent(secondNode.id, snapshot: secondNode, index: indexToRemove),
       ),
       DocumentEdit(
-        NodeChangeEvent(nodeAbove.id),
+        NodeChangeEvent(nodeAbove.id, snapshot: oldNodeAbove, newSnapshot: nodeAbove.clone()),
       ),
     ]);
   }
@@ -379,7 +386,7 @@ class SplitParagraphCommand implements EditCommand {
       editorDocLog.info('WARNING: Cannot split paragraph for node of type: $node.');
       return;
     }
-
+    final oldNode = node.clone();
     final text = node.text;
     final startText = text.copyText(0, splitPosition.offset);
     final endText = text.copyText(splitPosition.offset);
@@ -448,10 +455,10 @@ class SplitParagraphCommand implements EditCommand {
 
     final documentChanges = [
       DocumentEdit(
-        NodeChangeEvent(node.id),
+        NodeChangeEvent(node.id, snapshot: oldNode, newSnapshot: node.clone()),
       ),
       DocumentEdit(
-        NodeInsertedEvent(newNodeId, document.getNodeIndexById(newNodeId)),
+        NodeInsertedEvent(newNodeId, document.getNodeIndexById(newNodeId), snapshot: newNode.clone()),
       ),
       SelectionChangeEvent(
         oldSelection: oldSelection,
@@ -622,9 +629,18 @@ class DeleteUpstreamAtBeginningOfParagraphCommand implements EditCommand {
 }
 
 class Intention implements EditEvent {
-  Intention.start() : _isStart = true;
+  Intention.start({this.metadata = const {}})
+      : _isStart = true,
+        createdAt = DateTime.now();
 
-  Intention.end() : _isStart = false;
+  Intention.end({this.metadata = const {}})
+      : _isStart = false,
+        createdAt = DateTime.now();
+
+  @override
+  final DateTime createdAt;
+  @override
+  final Map<String, dynamic> metadata;
 
   final bool _isStart;
 
@@ -703,6 +719,7 @@ class DeleteParagraphCommand implements EditCommand {
       return;
     }
 
+    final indexToRemove = document.getNodeIndexById(node.id);
     bool didRemove = document.deleteNode(node);
     if (!didRemove) {
       editorDocLog.shout('ERROR: Failed to delete node "$node" from the document.');
@@ -710,7 +727,7 @@ class DeleteParagraphCommand implements EditCommand {
 
     executor.logChanges([
       DocumentEdit(
-        NodeRemovedEvent(node.id, node),
+        NodeRemovedEvent(node.id, snapshot: node, index: indexToRemove),
       )
     ]);
   }

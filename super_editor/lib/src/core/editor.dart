@@ -434,15 +434,26 @@ abstract class EditRequest {
 /// A change that took place within a [Editor].
 abstract class EditEvent {
   // Marker interface for all editor change events.
+  EditEvent({
+    required this.metadata,
+  }) : createdAt = DateTime.now();
+  final Map<String, dynamic> metadata;
+  final DateTime createdAt;
 }
 
 /// An [EditEvent] that altered a [Document].
 ///
 /// The specific [Document] change is available in [change].
 class DocumentEdit implements EditEvent {
-  DocumentEdit(this.change);
+  DocumentEdit(this.change, {this.metadata = const {}}) : createdAt = DateTime.now();
 
   final DocumentChange change;
+
+  @override
+  final Map<String, dynamic> metadata;
+
+  @override
+  final DateTime createdAt;
 
   @override
   String toString() => "DocumentEdit -> $change";

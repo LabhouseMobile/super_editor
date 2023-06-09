@@ -50,6 +50,12 @@ class ImageNode extends BlockNode with ChangeNotifier {
     return !selection.isCollapsed ? _imageUrl : null;
   }
 
+
+  @override
+  DocumentNode clone() {
+    return ImageNode(id:id, imageUrl: imageUrl, metadata: metadata, altText: altText);
+  }
+
   @override
   bool hasEquivalentContent(DocumentNode other) {
     return other is ImageNode && imageUrl == other.imageUrl && altText == other.altText;

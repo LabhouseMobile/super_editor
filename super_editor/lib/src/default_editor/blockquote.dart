@@ -237,7 +237,7 @@ class ConvertBlockquoteToParagraphCommand implements EditCommand {
 
     executor.logChanges([
       DocumentEdit(
-        NodeChangeEvent(nodeId),
+        NodeChangeEvent(nodeId, snapshot: blockquote.clone(), newSnapshot: newParagraphNode.clone()),
       )
     ]);
   }
@@ -318,6 +318,7 @@ class SplitBlockquoteCommand implements EditCommand {
   void execute(EditContext context, CommandExecutor executor) {
     final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
+    final oldNode = node!.clone();
     final blockquote = node as ParagraphNode;
     final text = blockquote.text;
     final startText = text.copyText(0, splitPosition.offset);
@@ -345,10 +346,10 @@ class SplitBlockquoteCommand implements EditCommand {
 
     executor.logChanges([
       DocumentEdit(
-        NodeChangeEvent(nodeId),
+        NodeChangeEvent(nodeId, snapshot: oldNode.clone(), newSnapshot: blockquote.clone()),
       ),
       DocumentEdit(
-        NodeInsertedEvent(newNodeId, document.getNodeIndexById(newNodeId)),
+        NodeInsertedEvent(newNodeId, document.getNodeIndexById(newNodeId), snapshot: newNode.clone()),
       ),
     ]);
   }

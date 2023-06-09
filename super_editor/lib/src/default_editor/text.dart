@@ -159,6 +159,11 @@ class TextNode extends DocumentNode with ChangeNotifier {
   }
 
   @override
+  DocumentNode clone() {
+    return TextNode(id: id, text: text, metadata: metadata);
+  }
+
+  @override
   bool hasEquivalentContent(DocumentNode other) {
     return other is TextNode && text == other.text && super.hasEquivalentContent(other);
   }
@@ -1017,6 +1022,7 @@ class AddTextAttributionsCommand implements EditCommand {
     for (final entry in nodesAndSelections.entries) {
       for (Attribution attribution in attributions) {
         final node = entry.key;
+        final oldNode = node.clone();
         final range = entry.value.toSpanRange();
         editorDocLog.info(' - adding attribution: $attribution. Range: $range');
 
@@ -1034,7 +1040,7 @@ class AddTextAttributionsCommand implements EditCommand {
         );
         executor.logChanges([
           DocumentEdit(
-            NodeChangeEvent(node.id),
+            NodeChangeEvent(node.id, snapshot: oldNode, newSnapshot: node.clone()),
           ),
         ]);
       }
@@ -1128,6 +1134,7 @@ class RemoveTextAttributionsCommand implements EditCommand {
     for (final entry in nodesAndSelections.entries) {
       for (Attribution attribution in attributions) {
         final node = entry.key;
+        final oldNode = node.clone();
         final range = entry.value.toSpanRange();
         editorDocLog.info(' - removing attribution: $attribution. Range: $range');
 
@@ -1145,7 +1152,7 @@ class RemoveTextAttributionsCommand implements EditCommand {
 
         executor.logChanges([
           DocumentEdit(
-            NodeChangeEvent(node.id),
+            NodeChangeEvent(node.id, snapshot: oldNode, newSnapshot: node.clone()),
           ),
         ]);
       }
@@ -1253,6 +1260,7 @@ class ToggleTextAttributionsCommand implements EditCommand {
     for (final entry in nodesAndSelections.entries) {
       for (Attribution attribution in attributions) {
         final node = entry.key;
+        final oldNode = node.clone();
         final range = entry.value;
         editorDocLog.info(' - toggling attribution: $attribution. Range: $range');
 
@@ -1270,7 +1278,7 @@ class ToggleTextAttributionsCommand implements EditCommand {
 
         executor.logChanges([
           DocumentEdit(
-            NodeChangeEvent(node.id),
+            NodeChangeEvent(node.id, snapshot: oldNode, newSnapshot: node.clone()),
           ),
         ]);
       }
@@ -1315,6 +1323,7 @@ class InsertTextCommand implements EditCommand {
 
     final textPosition = documentPosition.nodePosition as TextPosition;
     final textOffset = textPosition.offset;
+    final oldNode = textNode.clone();
     textNode.text = textNode.text.insertString(
       textToInsert: textToInsert,
       startOffset: textOffset,
@@ -1327,6 +1336,8 @@ class InsertTextCommand implements EditCommand {
           nodeId: textNode.id,
           offset: textOffset,
           text: AttributedText(textToInsert),
+          snapshot: oldNode,
+          newSnapshot: textNode.clone(),
         ),
       ),
     ]);
@@ -1355,7 +1366,9 @@ class TextInsertionEvent extends NodeChangeEvent {
     required String nodeId,
     required this.offset,
     required this.text,
-  }) : super(nodeId);
+    required DocumentNode snapshot,
+    required DocumentNode newSnapshot,
+  }) : super(nodeId, snapshot: snapshot, newSnapshot: newSnapshot);
 
   final int offset;
   final AttributedText text;
@@ -1381,7 +1394,9 @@ class TextDeletedEvent extends NodeChangeEvent {
     String nodeId, {
     required this.offset,
     required this.deletedText,
-  }) : super(nodeId);
+    required DocumentNode snapshot,
+    required DocumentNode newSnapshot,
+  }) : super(nodeId, snapshot: snapshot, newSnapshot: newSnapshot);
 
   final int offset;
   final AttributedText deletedText;
@@ -1426,8 +1441,11 @@ class ConvertTextNodeToParagraphCommand extends EditCommand {
     final document = context.find<MutableDocument>(Editor.documentKey);
 
     final extentNode = document.getNodeById(nodeId) as TextNode;
+    final oldNode = extentNode.clone();
+    late DocumentNode newNode;
     if (extentNode is ParagraphNode) {
       extentNode.putMetadataValue('blockType', paragraphAttribution);
+      newNode = extentNode.clone();
     } else {
       final newParagraphNode = ParagraphNode(
         id: extentNode.id,
@@ -1436,11 +1454,16 @@ class ConvertTextNodeToParagraphCommand extends EditCommand {
       );
 
       document.replaceNode(oldNode: extentNode, newNode: newParagraphNode);
+      newNode = newParagraphNode.clone();
     }
 
     executor.logChanges([
       DocumentEdit(
-        NodeChangeEvent(extentNode.id),
+        NodeChangeEvent(
+          extentNode.id,
+          snapshot: oldNode,
+          newSnapshot: newNode,
+        ),
       ),
     ]);
   }
@@ -1465,7 +1488,7 @@ class InsertAttributedTextCommand implements EditCommand {
     }
 
     final textOffset = (documentPosition.nodePosition as TextPosition).offset;
-
+    final oldNode = textNode.clone();
     textNode.text = textNode.text.insert(
       textToInsert: textToInsert,
       startOffset: textOffset,
@@ -1473,7 +1496,7 @@ class InsertAttributedTextCommand implements EditCommand {
 
     executor.logChanges([
       DocumentEdit(
-        NodeChangeEvent(textNode.id),
+        NodeChangeEvent(textNode.id, snapshot: oldNode, newSnapshot: textNode.clone()),
       ),
     ]);
   }

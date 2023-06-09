@@ -376,7 +376,7 @@ class ConvertSelectedTextNodeCommand implements EditCommand {
 
     executor.logChanges([
       DocumentEdit(
-        NodeChangeEvent(newNode.id),
+        NodeChangeEvent(newNode.id, snapshot: oldNode.clone(), newSnapshot: newNode.clone()),
       ),
     ]);
   }

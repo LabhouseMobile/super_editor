@@ -109,10 +109,12 @@ abstract class NodeDocumentChange implements DocumentChange {
 
 /// A new [DocumentNode] was inserted in the [Document].
 class NodeInsertedEvent implements NodeDocumentChange {
-  const NodeInsertedEvent(this.nodeId, this.insertionIndex);
+  const NodeInsertedEvent(this.nodeId, this.insertionIndex, {required this.snapshot});
 
   @override
   final String nodeId;
+
+  final DocumentNode snapshot;
 
   final int insertionIndex;
 
@@ -162,22 +164,23 @@ class NodeMovedEvent implements NodeDocumentChange {
 
 /// A [DocumentNode] was removed from the [Document].
 class NodeRemovedEvent implements NodeDocumentChange {
-  const NodeRemovedEvent(this.nodeId, this.removedNode);
+  const NodeRemovedEvent(this.nodeId, {required this.snapshot, required this.index});
 
   @override
   final String nodeId;
 
-  final DocumentNode removedNode;
+  /// Node previous to be removed
+  final DocumentNode snapshot;
 
-  @override
-  String toString() => "NodeRemovedEvent ($nodeId)";
+  final int index;
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is NodeRemovedEvent && runtimeType == other.runtimeType && nodeId == other.nodeId;
+      identical(this, other) ||
+      other is NodeRemovedEvent && runtimeType == other.runtimeType && nodeId == other.nodeId && snapshot == other.snapshot;
 
   @override
-  int get hashCode => nodeId.hashCode;
+  int get hashCode => nodeId.hashCode ^ snapshot.hashCode;
 }
 
 /// The content of a [DocumentNode] changed.
@@ -186,20 +189,35 @@ class NodeRemovedEvent implements NodeDocumentChange {
 /// it might signify a node changing its type of content, such as converting a paragraph
 /// to an image.
 class NodeChangeEvent implements NodeDocumentChange {
-  const NodeChangeEvent(this.nodeId);
+  const NodeChangeEvent(
+    this.nodeId, {
+    required this.snapshot,
+    required this.newSnapshot,
+  });
 
   @override
   final String nodeId;
 
-  @override
-  String toString() => "NodeChangeEvent ($nodeId)";
+  /// Node previous to the change
+  final DocumentNode snapshot;
+
+  /// Node after to the change
+  final DocumentNode newSnapshot;
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is NodeChangeEvent && runtimeType == other.runtimeType && nodeId == other.nodeId;
+      identical(this, other) ||
+      other is NodeChangeEvent &&
+          runtimeType == other.runtimeType &&
+          nodeId == other.nodeId &&
+          snapshot == other.snapshot &&
+          newSnapshot == other.newSnapshot;
 
   @override
-  int get hashCode => nodeId.hashCode;
+  int get hashCode => nodeId.hashCode ^ snapshot.hashCode ^ newSnapshot.hashCode;
+
+  @override
+  String toString() => "[NodeChangeEvent] - Node: $nodeId";
 }
 
 /// A logical position within a [Document].
@@ -316,6 +334,9 @@ abstract class DocumentNode implements ChangeNotifier {
   /// within [selection], or null if the given selection does
   /// not make sense as plain-text.
   String? copyContent(NodeSelection selection);
+
+  /// Returns another instance as a clone of this node as is
+  DocumentNode clone();
 
   /// Returns true if the [other] node is the same type as this
   /// node, and contains the same content.

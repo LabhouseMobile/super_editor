@@ -2313,7 +2313,7 @@ class PasteEditorCommand implements EditCommand {
 
       executor.logChanges([
         DocumentEdit(
-          NodeInsertedEvent(pastedNode.id, document.getNodeIndexById(pastedNode.id)),
+          NodeInsertedEvent(pastedNode.id, document.getNodeIndexById(pastedNode.id), snapshot: pastedNode.clone()),
         )
       ]);
     }

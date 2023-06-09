@@ -53,6 +53,11 @@ class TaskNode extends TextNode {
 
   @override
   int get hashCode => super.hashCode ^ isComplete.hashCode;
+
+  @override
+  DocumentNode clone() {
+    return TaskNode(id: id, text: text, isComplete: isComplete, metadata: metadata);
+  }
 }
 
 /// Styles all task components to apply top padding
@@ -376,12 +381,12 @@ class ChangeTaskCompletionCommand implements EditCommand {
     if (taskNode is! TaskNode) {
       return;
     }
-
+    final oldNode = taskNode.clone();
     taskNode.isComplete = isComplete;
 
     executor.logChanges([
       DocumentEdit(
-        NodeChangeEvent(nodeId),
+        NodeChangeEvent(nodeId, snapshot: oldNode, newSnapshot: taskNode.clone()),
       ),
     ]);
   }
@@ -453,6 +458,8 @@ class ConvertTaskToParagraphCommand implements EditCommand {
     final document = context.find<MutableDocument>(Editor.documentKey);
     final node = document.getNodeById(nodeId);
     final taskNode = node as TaskNode;
+    final oldNode = taskNode.clone();
+
     final newMetadata = Map<String, dynamic>.from(paragraphMetadata ?? {});
     newMetadata["blockType"] = paragraphAttribution;
 
@@ -465,7 +472,7 @@ class ConvertTaskToParagraphCommand implements EditCommand {
 
     executor.logChanges([
       DocumentEdit(
-        NodeChangeEvent(taskNode.id),
+        NodeChangeEvent(taskNode.id, snapshot: oldNode, newSnapshot: newParagraphNode),
       )
     ]);
   }
@@ -522,6 +529,7 @@ class SplitExistingTaskCommand implements EditCommand {
       isComplete: false,
     );
 
+    final oldNode = node.clone();
     // Remove the text after the caret from the currently selected TaskNode.
     node.text = node.text.removeRegion(startOffset: splitOffset, endOffset: node.text.text.length);
 
@@ -543,10 +551,10 @@ class SplitExistingTaskCommand implements EditCommand {
 
     executor.logChanges([
       DocumentEdit(
-        NodeChangeEvent(node.id),
+        NodeChangeEvent(node.id, snapshot: oldNode, newSnapshot: node.clone()),
       ),
       DocumentEdit(
-        NodeInsertedEvent(newTaskNode.id, document.getNodeIndexById(newTaskNode.id)),
+        NodeInsertedEvent(newTaskNode.id, document.getNodeIndexById(newTaskNode.id), snapshot: newTaskNode.clone()),
       ),
       SelectionChangeEvent(
         oldSelection: oldSelection,
