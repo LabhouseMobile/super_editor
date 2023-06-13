@@ -120,7 +120,7 @@ class DocumentImeSerializer {
     // therefore it wouldn't report the backspace button.
     final selectedNode = _doc.getNode(selection.extent)!;
     final selectedNodeIndex = _doc.getNodeIndexById(selectedNode.id);
-    return selectedNodeIndex > 0 &&
+    return selectedNodeIndex >= 0 &&
         selection.isCollapsed &&
         selection.extent.nodePosition == selectedNode.beginningPosition;
   }
