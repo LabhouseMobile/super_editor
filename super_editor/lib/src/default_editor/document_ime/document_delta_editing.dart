@@ -68,11 +68,12 @@ class TextDeltasDocumentEditor {
 
       editorImeLog.info("Applying delta: $delta");
 
+      _nextImeValue = delta.apply(_previousImeValue);
+
       // ignore: unused_local_variable
       final execution = editor.rules.apply(editor, delta);
       if (execution != ExecutionInstruction.continueExecution) continue;
 
-      _nextImeValue = delta.apply(_previousImeValue);
       if (delta is TextEditingDeltaInsertion) {
         _applyInsertion(delta);
       } else if (delta is TextEditingDeltaReplacement) {
@@ -466,6 +467,7 @@ class TextDeltasDocumentEditor {
   }
 
   void insertNewline() {
+    if (editor.rules.rules.isNotEmpty) return;
     if (_nextImeValue != null) {
       _insertNewlineInDeltas();
     } else {
