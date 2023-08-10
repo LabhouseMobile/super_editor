@@ -58,9 +58,8 @@ class TextDeltasDocumentEditor {
 
     _previousImeValue = TextEditingValue(
       text: _serializedDoc.imeText,
-      selection: selection.value != null
-          ? _serializedDoc.documentToImeSelection(selection.value!)
-          : const TextSelection.collapsed(offset: -1),
+      selection:
+          selection.value != null ? _serializedDoc.documentToImeSelection(selection.value!) : const TextSelection.collapsed(offset: -1),
     );
 
     for (final delta in textEditingDeltas) {
@@ -71,7 +70,7 @@ class TextDeltasDocumentEditor {
       _nextImeValue = delta.apply(_previousImeValue);
 
       // ignore: unused_local_variable
-      final execution = editor.rules.apply(editor, delta);
+      final execution = editor.rules.apply(editor, delta, null);
       if (execution != ExecutionInstruction.continueExecution) continue;
 
       if (delta is TextEditingDeltaInsertion) {
@@ -238,8 +237,7 @@ class TextDeltasDocumentEditor {
 
   void insert(DocumentSelection insertionSelection, String textInserted) {
     editorImeLog.fine('Inserting "$textInserted" at position "$insertionSelection"');
-    editorImeLog
-        .fine("Updating the Document Composer's selection to place caret at insertion offset:\n$insertionSelection");
+    editorImeLog.fine("Updating the Document Composer's selection to place caret at insertion offset:\n$insertionSelection");
     final selectionBeforeInsertion = selection.value;
     editor.execute([
       ChangeSelectionRequest(

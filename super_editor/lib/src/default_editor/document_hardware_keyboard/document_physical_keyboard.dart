@@ -72,6 +72,10 @@ class _SuperEditorHardwareKeyHandlerState extends State<SuperEditorHardwareKeyHa
     editorKeyLog.info("Handling key press: $keyEvent");
     ExecutionInstruction instruction = ExecutionInstruction.continueExecution;
     int index = 0;
+
+    // Santi: first execute the rules defined by Labhouse
+    instruction = widget.editContext.editor.rules.apply(widget.editContext.editor, null, keyEvent);
+
     while (instruction == ExecutionInstruction.continueExecution && index < widget.keyboardActions.length) {
       instruction = widget.keyboardActions[index](
         editContext: widget.editContext,
@@ -93,7 +97,7 @@ class _SuperEditorHardwareKeyHandlerState extends State<SuperEditorHardwareKeyHa
   Widget build(BuildContext context) {
     return Focus(
       focusNode: _focusNode,
-      onKey: widget.keyboardActions.isEmpty ? null : _onKeyPressed,
+      onKey: widget.keyboardActions.isEmpty && widget.editContext.editor.rules.rules.isEmpty ? null : _onKeyPressed,
       autofocus: widget.autofocus,
       child: widget.child,
     );

@@ -37,10 +37,10 @@ packages:
     dependency: transitive
     description:
       name: attributed_text
-      sha256: "892b9517ba27f78ebee526424a91d1aba44d729e610f06a0dd9a3a43d3d81f6d"
+      sha256: e43495051b63e6cdbe96aa62123974074cca109d9c56f74ce2ffaec8060e044e
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.1"
+    version: "0.2.2"
   boolean_selector:
     dependency: transitive
     description:
@@ -358,7 +358,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "0.1.5"
+    version: "0.1.6"
   term_glyph:
     dependency: transitive
     description:
