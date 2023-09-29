@@ -27,7 +27,9 @@ class ListItemNode extends TextNode {
           text: text,
           metadata: metadata,
         ) {
-    putMetadataValue("blockType", const NamedAttribution("listItem"));
+    if (getMetadataValue('blockType') == null) {
+      putMetadataValue("blockType", const NamedAttribution("listItem"));
+    }
   }
 
   ListItemNode.unordered({
@@ -42,7 +44,9 @@ class ListItemNode extends TextNode {
           text: text,
           metadata: metadata,
         ) {
-    putMetadataValue("blockType", const NamedAttribution("listItem"));
+    if (getMetadataValue('blockType') == null) {
+      putMetadataValue("blockType", const NamedAttribution("listItem"));
+    }
   }
 
   ListItemNode({
