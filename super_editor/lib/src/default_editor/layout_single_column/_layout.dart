@@ -545,13 +545,18 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
       return null;
     }
 
-    final componentKey = _topToBottomComponentKeys.last;
-    final component = componentKey.currentState as DocumentComponent;
+    for (int i = _topToBottomComponentKeys.length - 1; i >= 0; --i) {
+      final componentKey = _topToBottomComponentKeys[i];
+      final component = componentKey.currentState as DocumentComponent?;
 
-    return DocumentPosition(
-      nodeId: _componentKeysToNodeIds[componentKey]!,
-      nodePosition: component.getEndPosition(),
-    );
+      if (component == null) continue;
+
+      return DocumentPosition(
+        nodeId: _componentKeysToNodeIds[componentKey]!,
+        nodePosition: component.getEndPosition(),
+      );
+    }
+    return null;
   }
 
   bool _isOffsetInComponent(RenderBox componentBox, Offset documentOffset) {
@@ -630,9 +635,9 @@ class _SingleColumnDocumentLayoutState extends State<SingleColumnDocumentLayout>
 
     for (int i = _topToBottomComponentKeys.length - 1; i >= 0; i--) {
       final componentKey = _topToBottomComponentKeys[i];
-      final component = componentKey.currentState as DocumentComponent;
+      final component = componentKey.currentState as DocumentComponent?;
 
-      if (component.isVisualSelectionSupported()) {
+      if (component != null && component.isVisualSelectionSupported()) {
         nodePosition = component.getEndPosition();
         nodeId = _componentKeysToNodeIds[componentKey];
         break;
