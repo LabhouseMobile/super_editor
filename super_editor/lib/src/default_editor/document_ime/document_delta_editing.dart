@@ -77,7 +77,7 @@ class TextDeltasDocumentEditor {
 
       _nextImeValue = delta.apply(_previousImeValue);
 
-      final execution = editor.rules.apply(editor, selection.value, delta);
+      final execution = editor.rules.apply(editor, delta);
       if (execution != ExecutionInstruction.continueExecution) continue;
 
       if (delta is TextEditingDeltaInsertion) {

@@ -51,7 +51,7 @@ class Editor implements RequestDispatcher {
   ///  - [listeners], which contains an initial set of [EditListener]s.
   Editor({
     required Map<String, Editable> editables,
-    List<EditorRule>? rules,
+    List<EditRule>? rules,
     List<EditRequestHandler>? requestHandlers,
     List<EditReaction>? reactionPipeline,
     List<EditListener>? listeners,
@@ -68,7 +68,7 @@ class Editor implements RequestDispatcher {
     _changeListeners.clear();
   }
 
-  final List<EditorRule> _rules;
+  final List<EditRule> _rules;
 
   EditorRules get rules => EditorRules(rules: _rules);
 
