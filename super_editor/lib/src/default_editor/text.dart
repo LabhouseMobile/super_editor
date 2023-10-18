@@ -379,6 +379,40 @@ mixin TextComponentViewModel on SingleColumnLayoutComponentViewModel {
       return inlineTextStyler(attributions, baseStyle);
     };
   }
+
+  bool isTextViewModelEquivalent(TextComponentViewModel other) {
+    // print("text == other.text? ${text == other.text}");
+    // print("_blockStyles == other? ${_textStyler == other._textStyler}");
+    // print("textDirection == other? ${textDirection == other.textDirection}");
+    // print("textAlignment == other? ${textAlignment == other.textAlignment}");
+    // print("selection == other? ${_isSelectionEquivalent(selection, other.selection)}");
+    // print("selection color == otehr? ${selectionColor == other.selectionColor}");
+    // print("highlight when empty == other? ${highlightWhenEmpty == other.highlightWhenEmpty}");
+
+    return text == other.text &&
+        textStyleBuilder == other.textStyleBuilder &&
+        textDirection == other.textDirection &&
+        textAlignment == other.textAlignment &&
+        _isSelectionEquivalent(selection, other.selection) &&
+        selectionColor == other.selectionColor &&
+        highlightWhenEmpty == other.highlightWhenEmpty;
+  }
+
+  bool _isSelectionEquivalent(TextSelection? selection1, TextSelection? selection2) {
+    // From a view model perspective, we don't care about the caret, because
+    // the caret isn't rendered in individual paragraphs. So the selection
+    // only changed if an expanded selection changed.
+    if (selection1 == selection2) {
+      return true;
+    }
+
+    if ((selection1 != null && !selection1.isCollapsed) || (selection2 != null && !selection2.isCollapsed)) {
+      // Some kind of expanded selection was changed.
+      return false;
+    }
+
+    return true;
+  }
 }
 
 /// Document component that displays hint text when its content text
