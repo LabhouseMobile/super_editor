@@ -314,7 +314,7 @@ class DragHandleAutoScroller {
       final gutterAmount = dragEndInViewport.dy.clamp(0.0, leadingScrollBoundary);
       final speedPercent = (1.0 - (gutterAmount / leadingScrollBoundary)).clamp(0.0, 1.0);
 
-      _autoScroller.startScrollingUp(speedPercent);
+      _autoScroller.startScrollingUp(speedPercent * 5);
     } else {
       _autoScroller.stopScrollingUp();
     }
@@ -326,7 +326,7 @@ class DragHandleAutoScroller {
       final gutterAmount = (_getViewportBox().size.height - dragEndInViewport.dy).clamp(0.0, trailingScrollBoundary);
       final speedPercent = 1.0 - (gutterAmount / trailingScrollBoundary);
 
-      _autoScroller.startScrollingDown(speedPercent);
+      _autoScroller.startScrollingDown(speedPercent * 2);
     } else {
       _autoScroller.stopScrollingDown();
     }
