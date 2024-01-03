@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide ListenableBuilder;
 import 'package:super_editor/src/core/document.dart';
 import 'package:super_editor/src/core/document_composer.dart';
@@ -462,8 +463,7 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   /// If this widget doesn't have an ancestor `Scrollable`, then this
   /// widget includes a `ScrollView` and this `State`'s render object
   /// is the viewport `RenderBox`.
-  RenderBox get viewportBox =>
-      (_findAncestorScrollable(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
+  RenderBox get viewportBox => (_findAncestorScrollable(context)?.context.findRenderObject() ?? context.findRenderObject()) as RenderBox;
 
   /// Converts the given [offset] from the [DocumentInteractor]'s coordinate
   /// space to the [DocumentLayout]'s coordinate space.
@@ -718,12 +718,10 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
         _selectionType = SelectionHandleType.collapsed;
         break;
       case HandleType.upstream:
-        _selectionType =
-            selectionAffinity == TextAffinity.downstream ? SelectionHandleType.base : SelectionHandleType.extent;
+        _selectionType = selectionAffinity == TextAffinity.downstream ? SelectionHandleType.base : SelectionHandleType.extent;
         break;
       case HandleType.downstream:
-        _selectionType =
-            selectionAffinity == TextAffinity.downstream ? SelectionHandleType.extent : SelectionHandleType.base;
+        _selectionType = selectionAffinity == TextAffinity.downstream ? SelectionHandleType.extent : SelectionHandleType.base;
         break;
     }
 
@@ -775,8 +773,8 @@ class _AndroidDocumentTouchInteractorState extends State<AndroidDocumentTouchInt
   void _updateSelectionForNewDragHandleLocation() {
     final docDragDelta = _globalDragOffset! - _globalStartDragOffset!;
     final dragScrollDelta = _dragStartScrollOffset! - scrollPosition.pixels;
-    final docDragPosition = _docLayout
-        .getDocumentPositionNearestToOffset(_startDragPositionOffset! + docDragDelta - Offset(0, dragScrollDelta));
+    final docDragPosition =
+        _docLayout.getDocumentPositionNearestToOffset(_startDragPositionOffset! + docDragDelta - Offset(0, dragScrollDelta));
 
     if (docDragPosition == null) {
       return;
@@ -1161,8 +1159,7 @@ class AndroidDocumentTouchEditingControls extends StatefulWidget {
   State createState() => _AndroidDocumentTouchEditingControlsState();
 }
 
-class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTouchEditingControls>
-    with SingleTickerProviderStateMixin {
+class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTouchEditingControls> with SingleTickerProviderStateMixin {
   // These global keys are assigned to each draggable handle to
   // prevent a strange dragging issue.
   //
@@ -1326,8 +1323,7 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
                   // the handles so that the magnifier doesn't show the handles
                   if (widget.editingController.shouldDisplayMagnifier) _buildMagnifier(),
                   // Build the editing toolbar
-                  if (widget.editingController.shouldDisplayToolbar && widget.editingController.isToolbarPositioned)
-                    _buildToolbar(context),
+                  if (widget.editingController.shouldDisplayToolbar && widget.editingController.isToolbarPositioned) _buildToolbar(context),
                   // Build a UI that's useful for debugging, if desired.
                   if (widget.showDebugPaint)
                     IgnorePointer(
@@ -1370,8 +1366,7 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
   }
 
   List<Widget> _buildHandles() {
-    if (!widget.editingController.shouldDisplayCollapsedHandle &&
-        !widget.editingController.shouldDisplayExpandedHandles) {
+    if (!widget.editingController.shouldDisplayCollapsedHandle && !widget.editingController.shouldDisplayExpandedHandles) {
       editorGesturesLog.finer('Not building overlay handles because there is no selection');
       // There is no selection. Draw nothing.
       return [];
@@ -1446,9 +1441,7 @@ class _AndroidDocumentTouchEditingControlsState extends State<AndroidDocumentTou
           child: Container(
             color: widget.showDebugPaint ? Colors.green : Colors.transparent,
             child: AnimatedOpacity(
-              opacity: handleType == HandleType.collapsed && widget.editingController.isCollapsedHandleAutoHidden
-                  ? 0.0
-                  : 1.0,
+              opacity: handleType == HandleType.collapsed && widget.editingController.isCollapsedHandleAutoHidden ? 0.0 : 1.0,
               duration: const Duration(milliseconds: 150),
               child: AndroidSelectionHandle(
                 handleType: handleType,
