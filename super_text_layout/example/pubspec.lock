@@ -36,10 +36,11 @@ packages:
   attributed_text:
     dependency: transitive
     description:
-      name: attributed_text
-      sha256: e43495051b63e6cdbe96aa62123974074cca109d9c56f74ce2ffaec8060e044e
-      url: "https://pub.dev"
-    source: hosted
+      path: attributed_text
+      ref: undo-redo
+      resolved-ref: "2396f960e4497b605dc1a17dd058087a25d546b4"
+      url: "https://github.com/LabhouseMobile/super_editor.git"
+    source: git
     version: "0.2.2"
   boolean_selector:
     dependency: transitive

@@ -10,7 +10,10 @@ dependencies:
   flutter_web_plugins:
     sdk: flutter
   super_editor:
-    path: ../super_editor
+    git:
+      url: https://github.com/LabhouseMobile/super_editor.git
+      ref: 02-2024
+      path: super_editor
   super_text_layout: ^0.1.0
   url_launcher:
 
