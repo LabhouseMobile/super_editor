@@ -2,6 +2,7 @@ name: super_editor
 description: Configurable, composable, extensible text editor and document renderer for Flutter.
 version: 0.2.6-dev.1
 homepage: https://github.com/superlistapp/super_editor
+publish_to: none
 
 screenshots:
   - description: "SuperEditor on Mac desktop"
@@ -22,14 +23,21 @@ dependencies:
     sdk: flutter
 
   attributed_text:
-    path: ../attributed_text
+    git:
+      url: https://github.com/LabhouseMobile/attributed_text.git
+      ref: undo-redo
+      path: attributed_text
+
   characters: ^1.2.0
   collection: ^1.15.0
   http: ^0.13.1
   linkify: ^4.0.0
   logging: ^1.0.1
   super_text_layout:
-    path: ../super_text_layout
+    git:
+      url: https://github.com/LabhouseMobile/super_text_layout.git
+      ref: undo-redo
+      path: super_text_layout
   url_launcher: ^6.1.9
   uuid: ^3.0.3
   overlord: ^0.0.3
@@ -44,8 +52,8 @@ dependency_overrides:
   #  # against changes that they're making to other mono-repo packages
   #  attributed_text:
   #    path: ../attributed_text
-  super_text_layout:
-    path: ../super_text_layout
+  # super_text_layout:
+  #   path: ../super_text_layout
 #
 #  flutter_test_robots:
 #    git:
