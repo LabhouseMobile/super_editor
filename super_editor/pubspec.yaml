@@ -25,7 +25,7 @@ dependencies:
   attributed_text:
     git:
       url: https://github.com/LabhouseMobile/super_editor.git
-      ref: 94799c8a51dfab8c029e114952f6bd0a32cecc83
+      ref: c3815e2ee9e25e4a2ab42c3f32374095c0e45c53
       path: attributed_text
 
   characters: ^1.2.0
@@ -36,7 +36,7 @@ dependencies:
   super_text_layout:
     git:
       url: https://github.com/LabhouseMobile/super_editor.git
-      ref: 94799c8a51dfab8c029e114952f6bd0a32cecc83
+      ref: c3815e2ee9e25e4a2ab42c3f32374095c0e45c53
       path: super_text_layout
   url_launcher: ^6.1.9
   uuid: ^3.0.3
