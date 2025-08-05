@@ -14,7 +14,7 @@ dependencies:
   attributed_text:
     git:
       url: https://github.com/LabhouseMobile/super_editor.git
-      ref: c3815e2ee9e25e4a2ab42c3f32374095c0e45c53
+      ref: undo-redo
       path: attributed_text
 
   logging: ^1.0.1
